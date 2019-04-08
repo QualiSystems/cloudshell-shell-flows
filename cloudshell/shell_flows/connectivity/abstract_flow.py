@@ -40,7 +40,7 @@ class ConnectivityErrorResponse(ConnectivityActionResult):
         self.success = False
 
 
-class ConnectivityFlow(ConnectivityInterface):
+class AbstractConnectivity(ConnectivityInterface):
     IS_VLAN_RANGE_SUPPORTED = True
     APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST = ["type", "actionId",
                                                                  ("connectionParams", "mode"),
@@ -54,15 +54,15 @@ class ConnectivityFlow(ConnectivityInterface):
         self.result = defaultdict(list)
 
     @abstractmethod
-    def add_vlan(self, vlan_range, port_mode, port_name, qnq, c_tag):
-        """Add Vlan
+    def _add_vlan_flow(self, vlan_range, port_mode, port_name, qnq, c_tag):
+        """Add VLAN, has to be implemented
         """
 
         pass
 
     @abstractmethod
-    def remove_vlan(self, vlan_range, port_name, port_mode):
-        """ Remove VLAN
+    def _remove_vlan_flow(self, vlan_range, port_name, port_mode):
+        """ Remove VLAN, has to be implemented
         """
 
         pass
@@ -108,13 +108,13 @@ class ConnectivityFlow(ConnectivityInterface):
                         ctag = attribute.attributeValue
 
                 for vlan_id in self._get_vlan_list(action.connectionParams.vlanId):
-                    add_vlan_thread = Thread(target=self._execute_add_vlan,
+                    add_vlan_thread = Thread(target=self._add_vlan_executor,
                                              name=action_id,
                                              args=(vlan_id, full_name, port_mode, qnq, ctag))
                     add_vlan_thread_list.append(add_vlan_thread)
             elif action.type == "removeVlan":
                 for vlan_id in self._get_vlan_list(action.connectionParams.vlanId):
-                    remove_vlan_thread = Thread(target=self._execute_remove_vlan,
+                    remove_vlan_thread = Thread(target=self._remove_vlan_executor,
                                                 name=action_id,
                                                 args=(vlan_id, full_name, port_mode,))
                     remove_vlan_thread_list.append(remove_vlan_thread)
@@ -234,7 +234,7 @@ class ConnectivityFlow(ConnectivityInterface):
 
         return map(str, list(result))
 
-    def _execute_add_vlan(self, vlan_id, full_name, port_mode, qnq, c_tag):
+    def _add_vlan_executor(self, vlan_id, full_name, port_mode, qnq, c_tag):
         """ Run flow to add VLAN(s) to interface
 
         :param vlan_id: Already validated number of VLAN(s)
@@ -245,7 +245,7 @@ class ConnectivityFlow(ConnectivityInterface):
         """
 
         try:
-            action_result = self.add_vlan(vlan_range=vlan_id,
+            action_result = self._add_vlan_flow(vlan_range=vlan_id,
                                           port_mode=port_mode,
                                           port_name=full_name,
                                           qnq=qnq,
@@ -255,7 +255,7 @@ class ConnectivityFlow(ConnectivityInterface):
             self._logger.error(traceback.format_exc())
             self.result[current_thread().name].append((False, e.message))
 
-    def _execute_remove_vlan(self, vlan_id, full_name, port_mode):
+    def _remove_vlan_executor(self, vlan_id, full_name, port_mode):
         """
         Run flow to remove VLAN(s) from interface
         :param vlan_id: Already validated number of VLAN(s)
@@ -265,7 +265,7 @@ class ConnectivityFlow(ConnectivityInterface):
 
         try:
 
-            action_result = self.remove_vlan(vlan_range=vlan_id,
+            action_result = self._remove_vlan_flow(vlan_range=vlan_id,
                                              port_name=full_name,
                                              port_mode=port_mode)
             self.result[current_thread().name].append((True, action_result))
