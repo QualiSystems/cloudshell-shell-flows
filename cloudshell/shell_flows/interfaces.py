@@ -30,3 +30,32 @@ class ConfigurationOperationsInterface(ABC):
     @abstractmethod
     def orchestration_restore(self, saved_artifact_info, custom_params=None):
         pass
+
+
+class FirmwareInterface(ABC):
+
+    @abstractmethod
+    def load_firmware(self, path, vrf_management_name):
+        pass
+
+
+class RunCommandInterface(ABC):
+
+    @abstractmethod
+    def run_custom_command(self, command):
+        pass
+
+    @abstractmethod
+    def run_custom_config_command(self, command):
+        pass
+
+
+class StateOperationsInterface(ABC):
+
+    @abstractmethod
+    def health_check(self):
+        pass
+
+    @abstractmethod
+    def shutdown(self):
+        pass

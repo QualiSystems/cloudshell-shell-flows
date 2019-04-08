@@ -20,7 +20,7 @@ class AbstractAutoload(AutoloadInterface):
         self._logger = logger
 
     @abstractmethod
-    def _get_details_flow(self, supported_os, shell_name, family_name, resource_name):
+    def _autoload_flow(self, supported_os, shell_name, family_name, resource_name):
         """
         Build autoload details, has to be implemented.
         :param list supported_os: list of regexp.
