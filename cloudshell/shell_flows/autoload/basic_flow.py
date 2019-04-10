@@ -59,10 +59,10 @@ class AbstractAutoload(AutoloadInterface):
         :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
         """
 
-        details = self._get_details(self.resource_config.supported_os,
-                                    self.resource_config.shell_name,
-                                    self.resource_config.family_name,
-                                    self.resource_config.name)
+        details = self._autoload_flow(self.resource_config.supported_os,
+                                      self.resource_config.shell_name,
+                                      self.resource_config.family_name,
+                                      self.resource_config.name)
 
         self._log_device_details(details)
         return details

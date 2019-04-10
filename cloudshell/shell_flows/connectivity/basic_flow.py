@@ -5,7 +5,7 @@ import traceback
 
 import jsonpickle
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections import defaultdict
 from threading import Thread, current_thread
 
