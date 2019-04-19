@@ -3,15 +3,15 @@
 import collections
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.interfaces import RunCommandInterface
+from cloudshell.shell_flows.interfaces import RunCommandFlowInterface
 
 
-class RunCommandFlow(RunCommandInterface):
+class RunCommandFlow(RunCommandFlowInterface):
     def __init__(self, logger, cli_configurator):
         """Create RunCommandOperations
 
         :param logger: QsLogger object
-        :param cloudshell.cli.configurator.EnableConfigModeConfigurator cli_configurator:
+        :param cloudshell.cli.configurator.AbstractModeConfigurator cli_configurator:
         """
         self._logger = logger
         self._cli_configurator = cli_configurator

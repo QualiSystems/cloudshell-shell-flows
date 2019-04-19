@@ -12,7 +12,7 @@ from posixpath import join
 from cloudshell.logging.utils.decorators import command_logging
 from cloudshell.shell.core.interfaces.save_restore import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
     OrchestrationSavedArtifact, OrchestrationRestoreRules
-from cloudshell.shell_flows.interfaces import ConfigurationOperationsInterface
+from cloudshell.shell_flows.interfaces import ConfigurationOperationsFlowInterface
 from cloudshell.shell_flows.utils.json_utils import JsonRequestDeserializer
 from cloudshell.shell_flows.utils.networking_utils import UrlParser
 
@@ -24,7 +24,7 @@ def _validate_custom_params(custom_params):
         raise Exception('ConfigurationOperations', 'custom_params attribute is empty')
 
 
-class AbstractConfigurationOperations(ConfigurationOperationsInterface):
+class AbstractConfigurationOperations(ConfigurationOperationsFlowInterface):
     REQUIRED_SAVE_ATTRIBUTES_LIST = ['resource_name', ('saved_artifact', 'identifier'),
                                      ('saved_artifact', 'artifact_type'), ('restore_rules', 'requires_same_resource')]
     DEFAULT_FILE_SYSTEM = "File System"

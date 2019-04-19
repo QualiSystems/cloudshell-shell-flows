@@ -1,19 +1,19 @@
 from abc import ABC, abstractmethod
 
 
-class ConnectivityInterface(ABC):
+class ConnectivityFlowInterface(ABC):
     @abstractmethod
     def apply_connectivity_changes(self, request):
         pass
 
 
-class AutoloadInterface(ABC):
+class AutoloadFlowInterface(ABC):
     @abstractmethod
-    def discover(self):
+    def discover(self, supported_os, resource_model):
         pass
 
 
-class ConfigurationOperationsInterface(ABC):
+class ConfigurationOperationsFlowInterface(ABC):
 
     @abstractmethod
     def save(self, folder_path, configuration_type, vrf_management_name=None):
@@ -32,14 +32,14 @@ class ConfigurationOperationsInterface(ABC):
         pass
 
 
-class FirmwareInterface(ABC):
+class FirmwareFlowInterface(ABC):
 
     @abstractmethod
     def load_firmware(self, path, vrf_management_name):
         pass
 
 
-class RunCommandInterface(ABC):
+class RunCommandFlowInterface(ABC):
 
     @abstractmethod
     def run_custom_command(self, command):
@@ -50,7 +50,7 @@ class RunCommandInterface(ABC):
         pass
 
 
-class StateOperationsInterface(ABC):
+class StateOperationsFlowInterface(ABC):
 
     @abstractmethod
     def health_check(self):

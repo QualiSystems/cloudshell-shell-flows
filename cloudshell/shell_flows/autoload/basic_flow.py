@@ -4,30 +4,24 @@
 from abc import abstractmethod
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.interfaces import AutoloadInterface
+from cloudshell.shell_flows.interfaces import AutoloadFlowInterface
 
 
-class AbstractAutoload(AutoloadInterface):
+class AbstractAutoloadFlow(AutoloadFlowInterface):
 
-    def __init__(self, resource_config, logger):
+    def __init__(self, logger):
         """
-        Facilitate SNMP autoload
-        :param cloudshell.shell_standards.core.resource_config_entities.GenericResourceConfig resource_config:
+        Autoload Flow
         :param logging.Logger logger:
         """
-
-        self.resource_config = resource_config
         self._logger = logger
 
     @abstractmethod
-    def _autoload_flow(self, supported_os, shell_name, family_name, resource_name):
+    def _autoload_flow(self, supported_os, resource_model):
         """
         Build autoload details, has to be implemented.
-        :param list supported_os: list of regexp.
-        :param str shell_name: shell_name.
-        :param str family_name: resource family name.
-        :param str resource_name: resource name
-        :return: autolod details
+        :param collections.Iterable supported_os:
+        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:
         :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
         """
         pass
@@ -51,18 +45,13 @@ class AbstractAutoload(AutoloadInterface):
         ))
 
     @command_logging
-    def discover(self):
-        """Enable and Disable SNMP communityon the device, Read it's structure and attributes: chassis, modules,
-        submodules, ports, port-channels and power supplies.
-
-        :return: AutoLoadDetails object
-        :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
+    def discover(self, supported_os, resource_model):
         """
-
-        details = self._autoload_flow(self.resource_config.supported_os,
-                                      self.resource_config.shell_name,
-                                      self.resource_config.family_name,
-                                      self.resource_config.name)
+        :param collections.Iterable supported_os:
+        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:
+        :return:
+        """
+        details = self._autoload_flow(supported_os, resource_model)
 
         self._log_device_details(details)
         return details

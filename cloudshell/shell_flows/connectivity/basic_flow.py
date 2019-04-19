@@ -13,7 +13,7 @@ from cloudshell.core.driver_response import DriverResponse
 from cloudshell.core.driver_response_root import DriverResponseRoot
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.interfaces import ConnectivityInterface
+from cloudshell.shell_flows.interfaces import ConnectivityFlowInterface
 from cloudshell.shell_flows.utils.json_utils import JsonRequestDeserializer
 
 
@@ -40,7 +40,7 @@ class ConnectivityErrorResponse(ConnectivityActionResult):
         self.success = False
 
 
-class AbstractConnectivity(ConnectivityInterface):
+class AbstractConnectivity(ConnectivityFlowInterface):
     IS_VLAN_RANGE_SUPPORTED = True
     APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST = ["type", "actionId",
                                                                  ("connectionParams", "mode"),
@@ -246,10 +246,10 @@ class AbstractConnectivity(ConnectivityInterface):
 
         try:
             action_result = self._add_vlan_flow(vlan_range=vlan_id,
-                                          port_mode=port_mode,
-                                          port_name=full_name,
-                                          qnq=qnq,
-                                          c_tag=c_tag)
+                                                port_mode=port_mode,
+                                                port_name=full_name,
+                                                qnq=qnq,
+                                                c_tag=c_tag)
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())
@@ -266,8 +266,8 @@ class AbstractConnectivity(ConnectivityInterface):
         try:
 
             action_result = self._remove_vlan_flow(vlan_range=vlan_id,
-                                             port_name=full_name,
-                                             port_mode=port_mode)
+                                                   port_name=full_name,
+                                                   port_mode=port_mode)
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())

@@ -4,11 +4,11 @@
 from abc import abstractmethod
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.interfaces import FirmwareInterface
+from cloudshell.shell_flows.interfaces import FirmwareFlowInterface
 from cloudshell.shell_flows.utils.networking_utils import UrlParser
 
 
-class AbstractFirmware(FirmwareInterface):
+class AbstractFirmware(FirmwareFlowInterface):
     def __init__(self, logger):
         """Handle firmware upgrade process
 
