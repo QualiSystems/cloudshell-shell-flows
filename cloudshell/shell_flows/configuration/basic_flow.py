@@ -24,7 +24,7 @@ def _validate_custom_params(custom_params):
         raise Exception('ConfigurationOperations', 'custom_params attribute is empty')
 
 
-class AbstractConfigurationOperations(ConfigurationOperationsFlowInterface):
+class AbstractConfigurationOperationsFlow(ConfigurationOperationsFlowInterface):
     REQUIRED_SAVE_ATTRIBUTES_LIST = ['resource_name', ('saved_artifact', 'identifier'),
                                      ('saved_artifact', 'artifact_type'), ('restore_rules', 'requires_same_resource')]
     DEFAULT_FILE_SYSTEM = "File System"

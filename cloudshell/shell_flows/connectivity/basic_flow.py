@@ -40,7 +40,7 @@ class ConnectivityErrorResponse(ConnectivityActionResult):
         self.success = False
 
 
-class AbstractConnectivity(ConnectivityFlowInterface):
+class AbstractConnectivityFlow(ConnectivityFlowInterface):
     IS_VLAN_RANGE_SUPPORTED = True
     APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST = ["type", "actionId",
                                                                  ("connectionParams", "mode"),
