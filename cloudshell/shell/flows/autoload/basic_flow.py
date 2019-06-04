@@ -4,7 +4,7 @@
 from abc import abstractmethod
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.interfaces import AutoloadFlowInterface
+from cloudshell.shell.flows.interfaces import AutoloadFlowInterface
 
 
 class AbstractAutoloadFlow(AutoloadFlowInterface):

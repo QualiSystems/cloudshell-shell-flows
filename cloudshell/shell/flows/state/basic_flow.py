@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell_flows.command.basic_flow import RunCommandFlow
-from cloudshell.shell_flows.interfaces import StateOperationsFlowInterface
+from cloudshell.shell.flows.command.basic_flow import RunCommandFlow
+from cloudshell.shell.flows.interfaces import StateOperationsFlowInterface
 
 
 class StateFlow(StateOperationsFlowInterface):

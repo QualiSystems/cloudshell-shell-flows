@@ -10,11 +10,11 @@ from abc import abstractmethod
 from posixpath import join
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell.core.interfaces.save_restore import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
+from cloudshell.shell.standards.core import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
     OrchestrationSavedArtifact, OrchestrationRestoreRules
-from cloudshell.shell_flows.interfaces import ConfigurationOperationsFlowInterface
-from cloudshell.shell_flows.utils.json_utils import JsonRequestDeserializer
-from cloudshell.shell_flows.utils.networking_utils import UrlParser
+from cloudshell.shell.flows.interfaces import ConfigurationOperationsFlowInterface
+from cloudshell.shell.flows.utils import JsonRequestDeserializer
+from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
 
