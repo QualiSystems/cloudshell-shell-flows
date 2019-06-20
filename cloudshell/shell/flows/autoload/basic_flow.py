@@ -21,7 +21,7 @@ class AbstractAutoloadFlow(AutoloadFlowInterface):
         """
         Build autoload details, has to be implemented.
         :param collections.Iterable supported_os:
-        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:
+        :param cloudshell.shell.standards.autoload_generic_models.GenericResourceModel resource_model:
         :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
         """
         pass
