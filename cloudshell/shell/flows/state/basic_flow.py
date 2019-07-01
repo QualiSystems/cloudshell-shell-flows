@@ -6,11 +6,11 @@ from cloudshell.shell.flows.interfaces import StateOperationsFlowInterface
 
 
 class StateFlow(StateOperationsFlowInterface):
-    def __init__(self, logger, api, resource_config, cli_handler):
+    def __init__(self, logger, api, resource_config, cli_configurator):
         self._logger = logger
         self._api = api
         self.resource_config = resource_config
-        self._cli_handler = cli_handler
+        self._cli_configurator = cli_configurator
 
     @command_logging
     def health_check(self):
@@ -20,7 +20,7 @@ class StateFlow(StateOperationsFlowInterface):
 
         result = 'Health check on resource {}'.format(self.resource_config.name)
         try:
-            RunCommandFlow(self._cli_handler, self._logger).run_custom_command()
+            RunCommandFlow(self._cli_configurator, self._logger).run_custom_command()
             result += ' passed.'
         except Exception as e:
             self._logger.exception(e)
