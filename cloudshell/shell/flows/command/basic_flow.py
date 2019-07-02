@@ -29,9 +29,9 @@ class RunCommandFlow(RunCommandFlowInterface):
             commands = custom_command
 
         if is_config:
-            service_manager = self._cli_configurator.enable_mode_service()
-        else:
             service_manager = self._cli_configurator.config_mode_service()
+        else:
+            service_manager = self._cli_configurator.enable_mode_service()
 
         responses = []
         with service_manager as session:
