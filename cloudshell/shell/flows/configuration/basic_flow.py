@@ -10,28 +10,17 @@ from abc import abstractmethod
 from posixpath import join
 
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell.core.interfaces.save_restore import OrchestrationSavedArtifact, OrchestrationSavedArtifactInfo, \
-    OrchestrationSaveResult, OrchestrationRestoreRules
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
-from cloudshell.shell.standards.core import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
-    OrchestrationSavedArtifact, OrchestrationRestoreRules
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
 
 
-def _validate_custom_params(custom_params):
-    if not hasattr(custom_params, 'custom_params'):
-        raise Exception('ConfigurationOperations', 'custom_params attribute is empty')
-
-
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
-    REQUIRED_SAVE_ATTRIBUTES_LIST = ['resource_name', ('saved_artifact', 'identifier'),
-                                     ('saved_artifact', 'artifact_type'), ('restore_rules', 'requires_same_resource')]
     DEFAULT_BACKUP_TYPE = "File System"
 
-    def __init__(self, resource_config, logger):
+    def __init__(self, logger, resource_config):
         """
 
         :param cloudshell.shell_standards.resource_config_generic_models.GenericBackupConfig resource_config:
@@ -87,13 +76,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
                         configuration_type=configuration_type.lower(),
                         vrf_management_name=vrf_management_name or getattr(self.resource_config,
                                                                            "vrf_management_name", None))
-
-        if return_artifact:
-            artifact_type = full_path.split(':')[0]
-            identifier = full_path.replace("{0}:".format(artifact_type), "")
-            return OrchestrationSavedArtifact(identifier=identifier, artifact_type=artifact_type)
-
-        return destination_filename
+        return folder_path
 
     @command_logging
     def restore(self, path, configuration_type="running", restore_method="override", vrf_management_name=None):
@@ -131,16 +114,9 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         save_params.update(params.get('custom_params', {}))
         save_params['folder_path'] = self._get_path(save_params['folder_path'])
 
-        saved_artifact = self.save(**save_params)
+        path = self.save(**save_params)
 
-        saved_artifact_info = OrchestrationSavedArtifactInfo(resource_name=self.resource_config.name,
-                                                             created_date=datetime.datetime.now(),
-                                                             restore_rules=self._get_restore_rules(),
-                                                             saved_artifact=saved_artifact)
-        save_response = OrchestrationSaveResult(saved_artifacts_info=saved_artifact_info)
-        self._validate_artifact_info(saved_artifact_info)
-
-        return str(jsonpickle.encode(save_response, unpicklable=False))
+        return path
 
     @command_logging
     def orchestration_restore(self, saved_artifact_info, custom_params=None):
@@ -150,45 +126,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :param custom_params: custom parameters
         """
 
-        if saved_artifact_info is None or saved_artifact_info == '':
-            raise Exception('ConfigurationOperations', 'saved_artifact_info is None or empty')
-
-        saved_artifact_info = JsonRequestDeserializer(jsonpickle.decode(saved_artifact_info))
-        if not hasattr(saved_artifact_info, 'saved_artifacts_info'):
-            raise Exception('ConfigurationOperations', 'Saved_artifacts_info is missing')
-        saved_config = saved_artifact_info.saved_artifacts_info
-        params = None
-        if custom_params:
-            params = JsonRequestDeserializer(jsonpickle.decode(custom_params))
-            _validate_custom_params(params)
-
-        self._validate_artifact_info(saved_config)
-
-        if saved_config.restore_rules.requires_same_resource \
-                and saved_config.resource_name.lower() != self.resource_config.name.lower():
-            raise Exception('ConfigurationOperations',
-                            'Incompatible resource, expected {}'.format(self.resource_config.name))
-
-        restore_params = {'configuration_type': 'running',
-                          'restore_method': 'override',
-                          'vrf_management_name': None,
-                          'path': '{}:{}'.format(saved_config.saved_artifact.artifact_type,
-                                                 saved_config.saved_artifact.identifier)}
-
-        if hasattr(params, 'custom_params'):
-            if hasattr(params.custom_params, 'restore_method'):
-                restore_params['restore_method'] = params.custom_params.restore_method
-
-            if hasattr(params.custom_params, 'configuration_type'):
-                restore_params['configuration_type'] = params.custom_params.configuration_type
-
-            if hasattr(params.custom_params, 'vrf_management_name'):
-                restore_params['vrf_management_name'] = params.custom_params.vrf_management_name
-
-        if 'startup' in saved_config.saved_artifact.identifier.split('/')[-1]:
-            restore_params['configuration_type'] = 'startup'
-
-        self.restore(**restore_params)
+        pass
 
     def _get_path(self, path=''):
         """
@@ -234,37 +172,3 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         if configuration_type.lower() != 'running' and configuration_type.lower() != 'startup':
             raise Exception(self.__class__.__name__, 'Configuration Type is invalid. Should be startup or running')
 
-    def _validate_artifact_info(self, saved_config):
-        """Validate OrchestrationSavedArtifactInfo object for key components
-
-        :param OrchestrationSavedArtifactInfo saved_config: object to validate
-        """
-        is_fail = False
-        fail_attribute = ''
-        for class_attribute in self.REQUIRED_SAVE_ATTRIBUTES_LIST:
-            if type(class_attribute) is tuple:
-                if not hasattr(saved_config, class_attribute[0]):
-                    is_fail = True
-                    fail_attribute = class_attribute[0]
-                elif not hasattr(getattr(saved_config, class_attribute[0]), class_attribute[1]):
-                    is_fail = True
-                    fail_attribute = class_attribute[1]
-            else:
-                if not hasattr(saved_config, class_attribute):
-                    is_fail = True
-                    fail_attribute = class_attribute
-
-        if is_fail:
-            raise Exception('ConfigurationOperations',
-                            'Mandatory field {0} is missing in Saved Artifact Info request json'.format(
-                                fail_attribute))
-
-    def _get_restore_rules(self):
-        """
-        Populate required restore rules.
-
-        :return OrchestrationRestoreRules: response
-        """
-
-        self._logger.info('Creating Restore Rules')
-        return OrchestrationRestoreRules(True)
