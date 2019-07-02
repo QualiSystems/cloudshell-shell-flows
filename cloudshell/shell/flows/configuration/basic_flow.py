@@ -10,6 +10,8 @@ from abc import abstractmethod
 from posixpath import join
 
 from cloudshell.logging.utils.decorators import command_logging
+from cloudshell.shell.core.interfaces.save_restore import OrchestrationSavedArtifact, OrchestrationSavedArtifactInfo, \
+    OrchestrationSaveResult, OrchestrationRestoreRules
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 from cloudshell.shell.standards.core import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
     OrchestrationSavedArtifact, OrchestrationRestoreRules
