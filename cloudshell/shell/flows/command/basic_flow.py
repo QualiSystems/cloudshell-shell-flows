@@ -20,6 +20,7 @@ class RunCommandFlow(RunCommandFlowInterface):
         """ Execute flow which run custom command on device
 
            :param custom_command: the command to execute on device
+           :type custom_command: str
            :param is_config: if True then run command in configuration mode
            :return: command execution output
            """
@@ -41,6 +42,8 @@ class RunCommandFlow(RunCommandFlowInterface):
         """ Execute custom command on device
 
         :param custom_command: command
+        :type custom_command: str
+
         :return: result of command execution
         """
 
@@ -51,6 +54,8 @@ class RunCommandFlow(RunCommandFlowInterface):
         """ Execute custom command in configuration mode on device
 
         :param custom_command: command
+        :type custom_command: str
+
         :return: result of command execution
         """
 

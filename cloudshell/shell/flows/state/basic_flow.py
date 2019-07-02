@@ -6,7 +6,7 @@ from cloudshell.shell.flows.interfaces import StateFlowInterface
 
 
 class StateFlow(StateFlowInterface):
-    def __init__(self, logger, api, resource_config, cli_configurator):
+    def __init__(self, logger, resource_config, cli_configurator, api):
         self._logger = logger
         self._api = api
         self.resource_config = resource_config
