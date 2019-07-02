@@ -23,10 +23,7 @@ class RunCommandFlow(RunCommandFlowInterface):
            :param is_config: if True then run command in configuration mode
            :return: command execution output
            """
-        if not isinstance(custom_command, collections.Iterable):
-            commands = [custom_command]
-        else:
-            commands = custom_command
+        commands = self.parse_custom_commands(custom_command)
 
         if is_config:
             service_manager = self._cli_configurator.enable_mode_service()
@@ -58,3 +55,15 @@ class RunCommandFlow(RunCommandFlowInterface):
         """
 
         return self._run_command_flow(custom_command=custom_command, is_config=True)
+
+    def parse_custom_commands(self, command, separator=";"):
+        """Parse run custom command string into the commands list
+
+        :param str command: run custom [config] command(s)
+        :param str separator: commands separator in the string
+        :rtype: list[str]
+        """
+        if not command:
+            return []
+
+        return command.strip(separator).split(separator)

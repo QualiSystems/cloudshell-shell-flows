@@ -11,7 +11,7 @@ def get_device_name(file_name, sys_obj_id, delimiter=":"):
     """
 
     try:
-        with open(file_name, "rb") as csv_file:
+        with open(file_name, "r") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=delimiter)
             for row in csv_reader:
                 if len(row) >= 2 and row[0] == sys_obj_id:

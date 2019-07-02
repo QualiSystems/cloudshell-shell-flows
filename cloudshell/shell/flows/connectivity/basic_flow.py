@@ -14,7 +14,7 @@ from cloudshell.core.driver_response_root import DriverResponseRoot
 
 from cloudshell.logging.utils.decorators import command_logging
 from cloudshell.shell.flows.interfaces import ConnectivityFlowInterface
-from cloudshell.shell.flows.utils import JsonRequestDeserializer
+from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 
 
 class ConnectivityActionResult(object):

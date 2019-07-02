@@ -13,7 +13,7 @@ class AutoloadFlowInterface(ABC):
         pass
 
 
-class ConfigurationOperationsFlowInterface(ABC):
+class ConfigurationFlowInterface(ABC):
 
     @abstractmethod
     def save(self, folder_path, configuration_type, vrf_management_name=None):
@@ -50,7 +50,7 @@ class RunCommandFlowInterface(ABC):
         pass
 
 
-class StateOperationsFlowInterface(ABC):
+class StateFlowInterface(ABC):
 
     @abstractmethod
     def health_check(self):
