@@ -18,7 +18,7 @@ AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
 
 
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
-    DEFAULT_BACKUP_TYPE = "File System"
+    DEFAULT_BACKUP_SCHEME = "File System"
 
     def __init__(self, logger, resource_config):
         """
@@ -141,7 +141,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             host = self.resource_config.backup_location
             if ':' not in host:
                 scheme = self.resource_config.backup_type
-                if not scheme or scheme.lower() == self.DEFAULT_BACKUP_TYPE.lower():
+                if not scheme or scheme.lower() == self.DEFAULT_BACKUP_SCHEME.lower():
                     scheme = self._file_system
                 scheme = re.sub('(:|/+).*$', '', scheme, re.DOTALL)
                 host = re.sub('^/+', '', host)
