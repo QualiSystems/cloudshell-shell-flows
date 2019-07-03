@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 from cloudshell.logging.utils.decorators import command_logging
 from cloudshell.shell.flows.command.basic_flow import RunCommandFlow
-from cloudshell.shell.flows.interfaces import StateOperationsFlowInterface
+from cloudshell.shell.flows.interfaces import StateFlowInterface
 
 
-class StateFlow(StateOperationsFlowInterface):
-    def __init__(self, logger, api, resource_config, cli_configurator):
+class StateFlow(StateFlowInterface):
+    def __init__(self, logger, resource_config, cli_configurator, api):
         self._logger = logger
         self._api = api
         self.resource_config = resource_config

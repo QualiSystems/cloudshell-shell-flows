@@ -12,8 +12,10 @@ from posixpath import join
 from cloudshell.logging.utils.decorators import command_logging
 from cloudshell.shell.core.interfaces.save_restore import OrchestrationSavedArtifact, OrchestrationSavedArtifactInfo, \
     OrchestrationSaveResult, OrchestrationRestoreRules
-from cloudshell.shell.flows.interfaces import ConfigurationOperationsFlowInterface
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
+from cloudshell.shell.standards.core import OrchestrationSaveResult, OrchestrationSavedArtifactInfo, \
+    OrchestrationSavedArtifact, OrchestrationRestoreRules
+from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
@@ -24,20 +26,18 @@ def _validate_custom_params(custom_params):
         raise Exception('ConfigurationOperations', 'custom_params attribute is empty')
 
 
-class AbstractConfigurationOperationsFlow(ConfigurationOperationsFlowInterface):
+class AbstractConfigurationFlow(ConfigurationFlowInterface):
     REQUIRED_SAVE_ATTRIBUTES_LIST = ['resource_name', ('saved_artifact', 'identifier'),
                                      ('saved_artifact', 'artifact_type'), ('restore_rules', 'requires_same_resource')]
-    DEFAULT_FILE_SYSTEM = "File System"
+    DEFAULT_BACKUP_SCHEME = "File System"
 
-    def __init__(self, resource_config, logger, api):
+    def __init__(self, resource_config, logger):
         """
 
         :param cloudshell.shell_standards.resource_config_generic_models.GenericBackupConfig resource_config:
         :param logging.Logger logger:
-        :param cloudshell.api.cloudshell_api.CloudShellAPISession api:
         """
         self._logger = logger
-        self._api = api
         self.resource_config = resource_config
 
     @abstractmethod
@@ -203,7 +203,7 @@ class AbstractConfigurationOperationsFlow(ConfigurationOperationsFlowInterface):
             host = self.resource_config.backup_location
             if ':' not in host:
                 scheme = self.resource_config.backup_type
-                if not scheme or scheme.lower() == self.DEFAULT_FILE_SYSTEM.lower():
+                if not scheme or scheme.lower() == self.DEFAULT_BACKUP_SCHEME.lower():
                     scheme = self._file_system
                 scheme = re.sub('(:|/+).*$', '', scheme, re.DOTALL)
                 host = re.sub('^/+', '', host)
@@ -216,7 +216,7 @@ class AbstractConfigurationOperationsFlow(ConfigurationOperationsFlowInterface):
             if UrlParser.USERNAME not in url or not url[UrlParser.USERNAME]:
                 url[UrlParser.USERNAME] = self.resource_config.backup_user
             if UrlParser.PASSWORD not in url or not url[UrlParser.PASSWORD]:
-                url[UrlParser.PASSWORD] = self._api.DecryptPassword(self.resource_config.backup_password).Value
+                url[UrlParser.PASSWORD] = self.resource_config.backup_password
         try:
             result = UrlParser.build_url(url)
         except Exception as e:
