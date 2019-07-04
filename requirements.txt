@@ -1,1 +1,3 @@
 jsonpickle
+cloudshell-logging>=1
+cloudshell-core>=2
