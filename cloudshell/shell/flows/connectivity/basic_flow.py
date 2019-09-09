@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import traceback
-
-import jsonpickle
-
 from abc import abstractmethod
 from collections import defaultdict
 from threading import Thread, current_thread
 
+import jsonpickle
 from cloudshell.core.driver_response import DriverResponse
 from cloudshell.core.driver_response_root import DriverResponseRoot
-
 from cloudshell.logging.utils.decorators import command_logging
+
 from cloudshell.shell.flows.interfaces import ConnectivityFlowInterface
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 

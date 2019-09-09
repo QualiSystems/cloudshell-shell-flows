@@ -3,6 +3,7 @@
 import collections
 
 from cloudshell.logging.utils.decorators import command_logging
+
 from cloudshell.shell.flows.interfaces import RunCommandFlowInterface
 
 

@@ -4,6 +4,7 @@
 from abc import abstractmethod
 
 from cloudshell.logging.utils.decorators import command_logging
+
 from cloudshell.shell.flows.interfaces import FirmwareFlowInterface
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
