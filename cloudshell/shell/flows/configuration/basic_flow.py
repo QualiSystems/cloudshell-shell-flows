@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import jsonpickle
 import re
 import time
-
 from abc import abstractmethod
 from posixpath import join
 
+import jsonpickle
 from cloudshell.logging.utils.decorators import command_logging
-from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
+
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
+from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
@@ -171,4 +171,3 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         if configuration_type.lower() != 'running' and configuration_type.lower() != 'startup':
             raise Exception(self.__class__.__name__, 'Configuration Type is invalid. Should be startup or running')
-
