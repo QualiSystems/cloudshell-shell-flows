@@ -11,7 +11,7 @@ from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 class AbstractFirmwareFlow(FirmwareFlowInterface):
     def __init__(self, logger):
-        """Handle firmware upgrade process
+        """Handle firmware upgrade process.
 
         :param logging.Logger logger: logger
         """
@@ -20,14 +20,17 @@ class AbstractFirmwareFlow(FirmwareFlowInterface):
 
     @abstractmethod
     def _load_firmware_flow(self, path, vrf_management_name, timeout):
-        """ Load Firmware flow property
+        """Load Firmware flow property.
+
         :return: LoadFirmwareFlow object
         """
         pass
 
     @command_logging
     def load_firmware(self, path, vrf_management_name=None):
-        """Update firmware version on device by loading provided image, performs following steps:
+        """Update firmware version on device by loading provided image.
+
+        Performs following steps:
 
             1. Copy bin file from remote tftp server.
             2. Clear in run config boot system section.
@@ -38,7 +41,6 @@ class AbstractFirmwareFlow(FirmwareFlowInterface):
         :param vrf_management_name: VRF Name
         :return: status / exception
         """
-
         url = UrlParser.parse_url(path)
         required_keys = [UrlParser.FILENAME, UrlParser.HOSTNAME, UrlParser.SCHEME]
 

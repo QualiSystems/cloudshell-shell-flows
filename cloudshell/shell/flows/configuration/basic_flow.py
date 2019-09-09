@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime
 import re
 import time
 from abc import abstractmethod
@@ -11,7 +10,6 @@ import jsonpickle
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
-from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
 AUTHORIZATION_REQUIRED_STORAGE = ["ftp", "sftp", "scp"]
@@ -21,9 +19,9 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
     DEFAULT_BACKUP_SCHEME = "File System"
 
     def __init__(self, logger, resource_config):
-        """
+        """Abstract configuration flow.
 
-        :param cloudshell.shell_standards.resource_config_generic_models.GenericBackupConfig resource_config:
+        :param cloudshell.shell_standards.resource_config_generic_models.GenericBackupConfig resource_config:  # noqa: E501
         :param logging.Logger logger:
         """
         self._logger = logger
@@ -31,27 +29,29 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
     @abstractmethod
     def _save_flow(self, folder_path, configuration_type, vrf_management_name):
-        """ Save flow, has to be implemented.
+        """Save flow, has to be implemented.
+
         :return: SaveFlow object
         """
-
         pass
 
     @abstractmethod
     def _restore_flow(
         self, path, configuration_type, restore_method, vrf_management_name
     ):
-        """ Restore flow, has to be implemented.
+        """Restore flow, has to be implemented.
+
         :return: RestoreFlow object
         """
-
         pass
 
     @property
     @abstractmethod
     def _file_system(self):
-        """ File system attribute, has to be implemented.
-        :return: str: file system name
+        """File system attribute, has to be implemented.
+
+        :return: file system name
+        :rtype: str
         """
         pass
 
@@ -63,16 +63,19 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         vrf_management_name=None,
         return_artifact=False,
     ):
-        """Backup 'startup-config' or 'running-config' from device to provided file_system [ftp|tftp]
+        """Backup config from the device to provided file system.
+
+        Config can be 'startup-config' or 'running-config'
         Also possible to backup config to localhost
+
         :param folder_path:  tftp/ftp server where file be saved
-        :param configuration_type: type of configuration that will be saved (StartUp or Running)
+        :param configuration_type: type of configuration that will be saved
+            (StartUp or Running)
         :param vrf_management_name: Virtual Routing and Forwarding management name
         :param return_artifact:
         :return: status message / exception
         :rtype: OrchestrationSavedArtifact or str
         """
-
         self._validate_configuration_type(configuration_type)
         folder_path = self._get_path(folder_path)
         system_name = re.sub(r"\s+", "_", self.resource_config.name)[:23]
@@ -98,15 +101,19 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         restore_method="override",
         vrf_management_name=None,
     ):
-        """Restore configuration on device from provided configuration file
-        Restore configuration from local file system or ftp/tftp server into 'running-config' or 'startup-config'.
-        :param path: relative path to the file on the remote host tftp://server/sourcefile
-        :param configuration_type: the configuration type to restore (StartUp or Running)
+        """Restore configuration on device from provided configuration file.
+
+        Restore configuration from local file system or ftp/tftp server into
+        'running-config' or 'startup-config'.
+
+        :param path: relative path to the file on the remote host
+            tftp://server/sourcefile
+        :param configuration_type: the configuration type to restore
+            (StartUp or Running)
         :param restore_method: override current config or not
         :param vrf_management_name: Virtual Routing and Forwarding management name
         :return: exception on crash
         """
-
         self._validate_configuration_type(configuration_type)
         path = self._get_path(path)
         self._restore_flow(
@@ -119,20 +126,20 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
     @command_logging
     def orchestration_save(self, mode="shallow", custom_params=None):
-        """Orchestration Save command
+        """Orchestration Save command.
 
         :param mode:
-        :param custom_params: json with all required action to configure or remove vlans from certain port
+        :param custom_params: json with all required action to configure or remove
+            vlans from certain port
         :return Serialized OrchestrationSavedArtifact to json
         :rtype json
         """
-
         save_params = {
             "folder_path": "",
             "configuration_type": "running",
             "return_artifact": True,
         }
-        params = dict()
+        params = {}
         if custom_params:
             params = jsonpickle.decode(custom_params)
 
@@ -145,23 +152,23 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
     @command_logging
     def orchestration_restore(self, saved_artifact_info, custom_params=None):
-        """Orchestration restore
+        """Orchestration restore.
 
-        :param saved_artifact_info: json with all required data to restore configuration on the device
+        :param saved_artifact_info: json with all required data to restore
+            configuration on the device
         :param custom_params: custom parameters
         """
-
         pass
 
     def _get_path(self, path=""):
-        """
-        Validate incoming path, if path is empty, build it from resource attributes,
+        """Validate incoming path.
+
+        If path is empty, build it from resource attributes,
         If path is invalid - raise exception
 
         :param path: path to remote file storage
         :return: valid path or :raise Exception:
         """
-
         if not path:
             host = self.resource_config.backup_location
             if ":" not in host:
@@ -190,12 +197,11 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         return result
 
     def _validate_configuration_type(self, configuration_type):
-        """Validate configuration type
+        """Validate configuration type.
 
         :param configuration_type: configuration_type, should be Startup or Running
         :raise Exception:
         """
-
         if (
             configuration_type.lower() != "running"
             and configuration_type.lower() != "startup"

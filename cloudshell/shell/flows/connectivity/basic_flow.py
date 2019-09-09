@@ -48,7 +48,8 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
     ]
 
     def __init__(self, logger):
-        """
+        """Abstract connectivity flow.
+
         :param logging.Logger logger:
         """
         self._logger = logger
@@ -56,28 +57,26 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
 
     @abstractmethod
     def _add_vlan_flow(self, vlan_range, port_mode, port_name, qnq, c_tag):
-        """Add VLAN, has to be implemented
-        """
-
+        """Add VLAN, has to be implemented."""
         pass
 
     @abstractmethod
     def _remove_vlan_flow(self, vlan_range, port_name, port_mode):
-        """ Remove VLAN, has to be implemented
-        """
-
+        """Remove VLAN, has to be implemented."""
         pass
 
     @command_logging
     def apply_connectivity_changes(self, request):
-        """ Handle apply connectivity changes request json, trigger add or remove vlan methods,
-        get responce from them and create json response
+        """Handle apply connectivity changes request json.
 
-        :param request: json with all required action to configure or remove vlans from certain port
+        Trigger add or remove vlan methods, get responce from them and
+            create json response
+
+        :param request: json with all required action to configure or remove vlans
+            from certain port
         :return Serialized DriverResponseRoot to json
         :rtype json
         """
-
         if request is None or request == "":
             raise Exception(self.__class__.__name__, "request is None or empty")
 
@@ -140,7 +139,8 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         for thread in remove_vlan_thread_list:
             thread.start()
 
-        # Join all remove_vlan_threads. Main thread will wait completion of all remove_vlan_thread
+        # Join all remove_vlan_threads.
+        # Main thread will wait completion of all remove_vlan_thread
         for thread in remove_vlan_thread_list:
             thread.join()
 
@@ -148,7 +148,8 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         for thread in add_vlan_thread_list:
             thread.start()
 
-        # Join all add_vlan_threads. Main thread will wait completion of all add_vlan_thread
+        # Join all add_vlan_threads.
+        # Main thread will wait completion of all add_vlan_thread
         for thread in add_vlan_thread_list:
             thread.join()
 
@@ -181,8 +182,10 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         )  # .replace("[true]", "true")
 
     def _validate_request_action(self, action):
-        """ Validate action from the request json,
-            according to APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST
+        """Validate action from the request json.
+
+        Validating according to
+            APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST
         """
         is_fail = False
         fail_attribute = ""
@@ -204,9 +207,8 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         if is_fail:
             raise Exception(
                 self.__class__.__name__,
-                "Mandatory field {0} is missing in ApplyConnectivityChanges request json".format(
-                    fail_attribute
-                ),
+                "Mandatory field {0} is missing in ApplyConnectivityChanges request "
+                "json".format(fail_attribute),
             )
 
     @staticmethod
@@ -231,12 +233,11 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         return True
 
     def _get_vlan_list(self, vlan_str):
-        """ Get VLAN list from input string
+        """Get VLAN list from input string.
 
         :param vlan_str:
         :return list of VLANs or Exception
         """
-
         result = set()
         for splitted_vlan in vlan_str.split(","):
             if "-" not in splitted_vlan:
@@ -274,7 +275,7 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         return map(str, list(result))
 
     def _add_vlan_executor(self, vlan_id, full_name, port_mode, qnq, c_tag):
-        """ Run flow to add VLAN(s) to interface
+        """Run flow to add VLAN(s) to interface.
 
         :param vlan_id: Already validated number of VLAN(s)
         :param full_name: Full interface name. Example: 2950/Chassis 0/FastEthernet0-23
@@ -282,7 +283,6 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         :param qnq:
         :param c_tag:
         """
-
         try:
             action_result = self._add_vlan_flow(
                 vlan_range=vlan_id,
@@ -297,13 +297,12 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
             self.result[current_thread().name].append((False, e.message))
 
     def _remove_vlan_executor(self, vlan_id, full_name, port_mode):
-        """
-        Run flow to remove VLAN(s) from interface
+        """Run flow to remove VLAN(s) from interface.
+
         :param vlan_id: Already validated number of VLAN(s)
         :param full_name: Full interface name. Example: 2950/Chassis 0/FastEthernet0-23
         :param port_mode: port mode type. Should be trunk or access
         """
-
         try:
 
             action_result = self._remove_vlan_flow(
