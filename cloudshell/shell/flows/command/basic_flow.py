@@ -36,7 +36,7 @@ class RunCommandFlow(RunCommandFlowInterface):
         with service_manager as session:
             for cmd in commands:
                 responses.append(session.send_command(command=cmd))
-        return '\n'.join(responses)
+        return "\n".join(responses)
 
     @command_logging
     def run_custom_command(self, custom_command):

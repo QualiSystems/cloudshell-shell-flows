@@ -40,9 +40,12 @@ class ConnectivityErrorResponse(ConnectivityActionResult):
 
 class AbstractConnectivityFlow(ConnectivityFlowInterface):
     IS_VLAN_RANGE_SUPPORTED = True
-    APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST = ["type", "actionId",
-                                                                 ("connectionParams", "mode"),
-                                                                 ("actionTarget", "fullAddress")]
+    APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST = [
+        "type",
+        "actionId",
+        ("connectionParams", "mode"),
+        ("actionTarget", "fullAddress"),
+    ]
 
     def __init__(self, logger):
         """
@@ -81,7 +84,9 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         holder = JsonRequestDeserializer(jsonpickle.decode(request))
 
         if not holder or not hasattr(holder, "driverRequest"):
-            raise Exception(self.__class__.__name__, "Deserialized request is None or empty")
+            raise Exception(
+                self.__class__.__name__, "Deserialized request is None or empty"
+            )
 
         driver_response = DriverResponse()
         add_vlan_thread_list = []
@@ -100,24 +105,35 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
                 qnq = False
                 ctag = ""
                 for attribute in action.connectionParams.vlanServiceAttributes:
-                    if attribute.attributeName.lower() == "qnq" and attribute.attributeValue.lower() == "true":
+                    if (
+                        attribute.attributeName.lower() == "qnq"
+                        and attribute.attributeValue.lower() == "true"
+                    ):
                         qnq = True
                     if attribute.attributeName.lower() == "ctag":
                         ctag = attribute.attributeValue
 
                 for vlan_id in self._get_vlan_list(action.connectionParams.vlanId):
-                    add_vlan_thread = Thread(target=self._add_vlan_executor,
-                                             name=action_id,
-                                             args=(vlan_id, full_name, port_mode, qnq, ctag))
+                    add_vlan_thread = Thread(
+                        target=self._add_vlan_executor,
+                        name=action_id,
+                        args=(vlan_id, full_name, port_mode, qnq, ctag),
+                    )
                     add_vlan_thread_list.append(add_vlan_thread)
             elif action.type == "removeVlan":
                 for vlan_id in self._get_vlan_list(action.connectionParams.vlanId):
-                    remove_vlan_thread = Thread(target=self._remove_vlan_executor,
-                                                name=action_id,
-                                                args=(vlan_id, full_name, port_mode,))
+                    remove_vlan_thread = Thread(
+                        target=self._remove_vlan_executor,
+                        name=action_id,
+                        args=(vlan_id, full_name, port_mode),
+                    )
                     remove_vlan_thread_list.append(remove_vlan_thread)
             else:
-                self._logger.warning("Undefined action type determined '{}': {}".format(action.type, action.__dict__))
+                self._logger.warning(
+                    "Undefined action type determined '{}': {}".format(
+                        action.type, action.__dict__
+                    )
+                )
                 continue
 
         # Start all created remove_vlan_threads
@@ -140,20 +156,29 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         for action in holder.driverRequest.actions:
             result_statuses, message = zip(*self.result.get(action.actionId))
             if all(result_statuses):
-                action_result = ConnectivitySuccessResponse(action,
-                                                            "Add Vlan {vlan} configuration successfully completed"
-                                                            .format(vlan=action.connectionParams.vlanId))
+                action_result = ConnectivitySuccessResponse(
+                    action,
+                    "Add Vlan {vlan} configuration successfully completed".format(
+                        vlan=action.connectionParams.vlanId
+                    ),
+                )
             else:
                 message_details = "\n\t".join(message)
-                action_result = ConnectivityErrorResponse(action, "Add Vlan {vlan} configuration failed."
-                                                                  "\nAdd Vlan configuration details:\n{message_details}"
-                                                          .format(vlan=action.connectionParams.vlanId,
-                                                                  message_details=message_details))
+                action_result = ConnectivityErrorResponse(
+                    action,
+                    "Add Vlan {vlan} configuration failed."
+                    "\nAdd Vlan configuration details:\n{message_details}".format(
+                        vlan=action.connectionParams.vlanId,
+                        message_details=message_details,
+                    ),
+                )
             request_result.append(action_result)
 
         driver_response.actionResults = request_result
         driver_response_root.driverResponse = driver_response
-        return str(jsonpickle.encode(driver_response_root, unpicklable=False))  # .replace("[true]", "true")
+        return str(
+            jsonpickle.encode(driver_response_root, unpicklable=False)
+        )  # .replace("[true]", "true")
 
     def _validate_request_action(self, action):
         """ Validate action from the request json,
@@ -161,7 +186,9 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         """
         is_fail = False
         fail_attribute = ""
-        for class_attribute in self.APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST:
+        for (
+            class_attribute
+        ) in self.APPLY_CONNECTIVITY_CHANGES_ACTION_REQUIRED_ATTRIBUTE_LIST:
             if type(class_attribute) is tuple:
                 if not hasattr(action, class_attribute[0]):
                     is_fail = True
@@ -175,9 +202,12 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
                     fail_attribute = class_attribute
 
         if is_fail:
-            raise Exception(self.__class__.__name__,
-                            "Mandatory field {0} is missing in ApplyConnectivityChanges request json".format(
-                                fail_attribute))
+            raise Exception(
+                self.__class__.__name__,
+                "Mandatory field {0} is missing in ApplyConnectivityChanges request json".format(
+                    fail_attribute
+                ),
+            )
 
     @staticmethod
     def _validate_vlan_number(number):
@@ -190,9 +220,9 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
 
     def _validate_vlan_range(self, vlan_range):
         result = None
-        for vlan in vlan_range.split(','):
-            if '-' in vlan:
-                for vlan_range_border in vlan.split('-'):
+        for vlan in vlan_range.split(","):
+            if "-" in vlan:
+                for vlan_range_border in vlan.split("-"):
                     result = self._validate_vlan_number(vlan_range_border)
             else:
                 result = self._validate_vlan_number(vlan)
@@ -213,22 +243,33 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
                 if self._validate_vlan_number(splitted_vlan):
                     result.add(int(splitted_vlan))
                 else:
-                    raise Exception(self.__class__.__name__, "Wrong VLAN number detected {}".format(splitted_vlan))
+                    raise Exception(
+                        self.__class__.__name__,
+                        "Wrong VLAN number detected {}".format(splitted_vlan),
+                    )
             else:
                 if self.IS_VLAN_RANGE_SUPPORTED:
                     if self._validate_vlan_range(splitted_vlan):
                         result.add(splitted_vlan)
                     else:
-                        raise Exception(self.__class__.__name__, "Wrong VLANs range detected {}".format(vlan_str))
+                        raise Exception(
+                            self.__class__.__name__,
+                            "Wrong VLANs range detected {}".format(vlan_str),
+                        )
                 else:
                     start, end = map(int, splitted_vlan.split("-"))
-                    if self._validate_vlan_number(start) and self._validate_vlan_number(end):
+                    if self._validate_vlan_number(start) and self._validate_vlan_number(
+                        end
+                    ):
                         if start > end:
                             start, end = end, start
                         for vlan in range(start, end + 1):
                             result.add(vlan)
                     else:
-                        raise Exception(self.__class__.__name__, "Wrong VLANs range detected {}".format(vlan_str))
+                        raise Exception(
+                            self.__class__.__name__,
+                            "Wrong VLANs range detected {}".format(vlan_str),
+                        )
 
         return map(str, list(result))
 
@@ -243,11 +284,13 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
         """
 
         try:
-            action_result = self._add_vlan_flow(vlan_range=vlan_id,
-                                                port_mode=port_mode,
-                                                port_name=full_name,
-                                                qnq=qnq,
-                                                c_tag=c_tag)
+            action_result = self._add_vlan_flow(
+                vlan_range=vlan_id,
+                port_mode=port_mode,
+                port_name=full_name,
+                qnq=qnq,
+                c_tag=c_tag,
+            )
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())
@@ -263,9 +306,9 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
 
         try:
 
-            action_result = self._remove_vlan_flow(vlan_range=vlan_id,
-                                                   port_name=full_name,
-                                                   port_mode=port_mode)
+            action_result = self._remove_vlan_flow(
+                vlan_range=vlan_id, port_name=full_name, port_mode=port_mode
+            )
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())
