@@ -14,13 +14,14 @@ class AutoloadFlowInterface(ABC):
 
 
 class ConfigurationFlowInterface(ABC):
-
     @abstractmethod
     def save(self, folder_path, configuration_type, vrf_management_name=None):
         pass
 
     @abstractmethod
-    def restore(self, path, configuration_type, restore_method, vrf_management_name=None):
+    def restore(
+        self, path, configuration_type, restore_method, vrf_management_name=None
+    ):
         pass
 
     @abstractmethod
@@ -33,14 +34,12 @@ class ConfigurationFlowInterface(ABC):
 
 
 class FirmwareFlowInterface(ABC):
-
     @abstractmethod
     def load_firmware(self, path, vrf_management_name):
         pass
 
 
 class RunCommandFlowInterface(ABC):
-
     @abstractmethod
     def run_custom_command(self, command):
         pass
@@ -51,7 +50,6 @@ class RunCommandFlowInterface(ABC):
 
 
 class StateFlowInterface(ABC):
-
     @abstractmethod
     def health_check(self):
         pass

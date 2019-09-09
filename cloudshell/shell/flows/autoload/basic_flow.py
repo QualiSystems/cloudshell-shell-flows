@@ -9,7 +9,6 @@ from cloudshell.shell.flows.interfaces import AutoloadFlowInterface
 
 
 class AbstractAutoloadFlow(AutoloadFlowInterface):
-
     def __init__(self, logger):
         """
         Autoload Flow
@@ -28,22 +27,26 @@ class AbstractAutoloadFlow(AutoloadFlowInterface):
         pass
 
     def _log_device_details(self, details):
-        needed_attrs = {'Vendor', 'Model', 'OS Version'}
+        needed_attrs = {"Vendor", "Model", "OS Version"}
         attrs = {}
 
         for attr in details.attributes:
-            attr_name = attr.attribute_name.rsplit('.', 1)[-1]
+            attr_name = attr.attribute_name.rsplit(".", 1)[-1]
 
-            if attr.relative_address == '' and attr_name in needed_attrs:
+            if attr.relative_address == "" and attr_name in needed_attrs:
                 attrs[attr_name] = attr.attribute_value
 
                 needed_attrs.remove(attr_name)
                 if not needed_attrs:
                     break
 
-        self._logger.info('Device Vendor: "{}", Model: "{}", OS Version: "{}"'.format(
-            attrs.get('Vendor', ''), attrs.get('Model', ''), attrs.get('OS Version', ''),
-        ))
+        self._logger.info(
+            'Device Vendor: "{}", Model: "{}", OS Version: "{}"'.format(
+                attrs.get("Vendor", ""),
+                attrs.get("Model", ""),
+                attrs.get("OS Version", ""),
+            )
+        )
 
     @command_logging
     def discover(self, supported_os, resource_model):

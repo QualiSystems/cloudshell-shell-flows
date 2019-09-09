@@ -14,7 +14,7 @@ from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
 from cloudshell.shell.flows.utils.networking_utils import UrlParser
 
-AUTHORIZATION_REQUIRED_STORAGE = ['ftp', 'sftp', 'scp']
+AUTHORIZATION_REQUIRED_STORAGE = ["ftp", "sftp", "scp"]
 
 
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
@@ -38,7 +38,9 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         pass
 
     @abstractmethod
-    def _restore_flow(self, path, configuration_type, restore_method, vrf_management_name):
+    def _restore_flow(
+        self, path, configuration_type, restore_method, vrf_management_name
+    ):
         """ Restore flow, has to be implemented.
         :return: RestoreFlow object
         """
@@ -54,7 +56,13 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         pass
 
     @command_logging
-    def save(self, folder_path='', configuration_type='running', vrf_management_name=None, return_artifact=False):
+    def save(
+        self,
+        folder_path="",
+        configuration_type="running",
+        vrf_management_name=None,
+        return_artifact=False,
+    ):
         """Backup 'startup-config' or 'running-config' from device to provided file_system [ftp|tftp]
         Also possible to backup config to localhost
         :param folder_path:  tftp/ftp server where file be saved
@@ -67,19 +75,29 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         self._validate_configuration_type(configuration_type)
         folder_path = self._get_path(folder_path)
-        system_name = re.sub(r'\s+', '_', self.resource_config.name)[:23]
+        system_name = re.sub(r"\s+", "_", self.resource_config.name)[:23]
         time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
-        destination_filename = '{0}-{1}-{2}'.format(system_name, configuration_type.lower(), time_stamp)
+        destination_filename = "{0}-{1}-{2}".format(
+            system_name, configuration_type.lower(), time_stamp
+        )
         full_path = join(folder_path, destination_filename)
         folder_path = self._get_path(full_path)
-        self._save_flow(folder_path=folder_path,
-                        configuration_type=configuration_type.lower(),
-                        vrf_management_name=vrf_management_name or getattr(self.resource_config,
-                                                                           "vrf_management_name", None))
+        self._save_flow(
+            folder_path=folder_path,
+            configuration_type=configuration_type.lower(),
+            vrf_management_name=vrf_management_name
+            or getattr(self.resource_config, "vrf_management_name", None),
+        )
         return folder_path
 
     @command_logging
-    def restore(self, path, configuration_type="running", restore_method="override", vrf_management_name=None):
+    def restore(
+        self,
+        path,
+        configuration_type="running",
+        restore_method="override",
+        vrf_management_name=None,
+    ):
         """Restore configuration on device from provided configuration file
         Restore configuration from local file system or ftp/tftp server into 'running-config' or 'startup-config'.
         :param path: relative path to the file on the remote host tftp://server/sourcefile
@@ -91,10 +109,13 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         self._validate_configuration_type(configuration_type)
         path = self._get_path(path)
-        self._restore_flow(path=path, configuration_type=configuration_type.lower(),
-                           restore_method=restore_method.lower(),
-                           vrf_management_name=vrf_management_name or getattr(self.resource_config,
-                                                                              "vrf_management_name", None))
+        self._restore_flow(
+            path=path,
+            configuration_type=configuration_type.lower(),
+            restore_method=restore_method.lower(),
+            vrf_management_name=vrf_management_name
+            or getattr(self.resource_config, "vrf_management_name", None),
+        )
 
     @command_logging
     def orchestration_save(self, mode="shallow", custom_params=None):
@@ -106,13 +127,17 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :rtype json
         """
 
-        save_params = {'folder_path': '', 'configuration_type': 'running', 'return_artifact': True}
+        save_params = {
+            "folder_path": "",
+            "configuration_type": "running",
+            "return_artifact": True,
+        }
         params = dict()
         if custom_params:
             params = jsonpickle.decode(custom_params)
 
-        save_params.update(params.get('custom_params', {}))
-        save_params['folder_path'] = self._get_path(save_params['folder_path'])
+        save_params.update(params.get("custom_params", {}))
+        save_params["folder_path"] = self._get_path(save_params["folder_path"])
 
         path = self.save(**save_params)
 
@@ -128,7 +153,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         pass
 
-    def _get_path(self, path=''):
+    def _get_path(self, path=""):
         """
         Validate incoming path, if path is empty, build it from resource attributes,
         If path is invalid - raise exception
@@ -139,13 +164,13 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         if not path:
             host = self.resource_config.backup_location
-            if ':' not in host:
+            if ":" not in host:
                 scheme = self.resource_config.backup_type
                 if not scheme or scheme.lower() == self.DEFAULT_BACKUP_SCHEME.lower():
                     scheme = self._file_system
-                scheme = re.sub('(:|/+).*$', '', scheme, re.DOTALL)
-                host = re.sub('^/+', '', host)
-                host = '{}://{}'.format(scheme, host)
+                scheme = re.sub("(:|/+).*$", "", scheme, re.DOTALL)
+                host = re.sub("^/+", "", host)
+                host = "{}://{}".format(scheme, host)
             path = host
 
         url = UrlParser.parse_url(path)
@@ -158,8 +183,10 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         try:
             result = UrlParser.build_url(url)
         except Exception as e:
-            self._logger.error('Failed to build url: {}'.format(e))
-            raise Exception('ConfigurationOperations', 'Failed to build path url to remote host')
+            self._logger.error("Failed to build url: {}".format(e))
+            raise Exception(
+                "ConfigurationOperations", "Failed to build path url to remote host"
+            )
         return result
 
     def _validate_configuration_type(self, configuration_type):
@@ -169,5 +196,11 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :raise Exception:
         """
 
-        if configuration_type.lower() != 'running' and configuration_type.lower() != 'startup':
-            raise Exception(self.__class__.__name__, 'Configuration Type is invalid. Should be startup or running')
+        if (
+            configuration_type.lower() != "running"
+            and configuration_type.lower() != "startup"
+        ):
+            raise Exception(
+                self.__class__.__name__,
+                "Configuration Type is invalid. Should be startup or running",
+            )
