@@ -10,18 +10,18 @@ from cloudshell.shell.flows.interfaces import AutoloadFlowInterface
 
 class AbstractAutoloadFlow(AutoloadFlowInterface):
     def __init__(self, logger):
-        """
-        Autoload Flow
+        """Autoload Flow.
+
         :param logging.Logger logger:
         """
         self._logger = logger
 
     @abstractmethod
     def _autoload_flow(self, supported_os, resource_model):
-        """
-        Build autoload details, has to be implemented.
+        """Build autoload details, has to be implemented.
+
         :param collections.Iterable supported_os:
-        :param cloudshell.shell.standards.autoload_generic_models.GenericResourceModel resource_model:
+        :param cloudshell.shell.standards.autoload_generic_models.GenericResourceModel resource_model:  # noqa: E501
         :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
         """
         pass
@@ -50,9 +50,10 @@ class AbstractAutoloadFlow(AutoloadFlowInterface):
 
     @command_logging
     def discover(self, supported_os, resource_model):
-        """
+        """Discover the resource.
+
         :param collections.Iterable supported_os:
-        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:
+        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:  # noqa: E501
         :return:
         """
         details = self._autoload_flow(supported_os, resource_model)

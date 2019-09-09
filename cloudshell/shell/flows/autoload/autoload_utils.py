@@ -2,14 +2,13 @@ import csv
 
 
 def get_device_name(file_name, sys_obj_id, delimiter=":"):
-    """Get device name by its SNMP sysObjectID property from the file map
+    """Get device name by its SNMP sysObjectID property from the file map.
 
     :param str file_name:
     :param str sys_obj_id:
     :param str delimiter:
     :rtype: str
     """
-
     try:
         with open(file_name, "r") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=delimiter)

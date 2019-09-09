@@ -15,8 +15,7 @@ class StateFlow(StateFlowInterface):
 
     @command_logging
     def health_check(self):
-        """ Verify that device is accessible over CLI by sending ENTER for cli session """
-
+        """Verify that device is accessible over CLI by sending ENTER for cli."""
         api_response = "Online"
 
         result = "Health check on resource {}".format(self.resource_config.name)
@@ -32,7 +31,7 @@ class StateFlow(StateFlowInterface):
             self._api.SetResourceLiveStatus(
                 self.resource_config.name, api_response, result
             )
-        except:
+        except Exception:
             self._logger.error(
                 "Cannot update {} resource status on portal".format(
                     self.resource_config.name
@@ -42,8 +41,7 @@ class StateFlow(StateFlowInterface):
         return result
 
     def shutdown(self):
-        """ Shutdown device """
-
+        """Shutdown device."""
         raise Exception(
             self.__class__.__name__,
             "Shutdown command isn't available for the current device",
