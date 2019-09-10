@@ -65,7 +65,6 @@ class RunCommandFlow(RunCommandFlowInterface):
         :param str separator: commands separator in the string
         :rtype: list[str]
         """
-        if not command:
-            return []
-
-        return command.strip(separator).split(separator)
+        if isinstance(command, str):
+            return command.strip(separator).split(separator)
+        return command
