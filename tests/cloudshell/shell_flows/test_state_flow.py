@@ -26,14 +26,14 @@ class TestStateFlow(unittest.TestCase):
 
     def test_shutdown(self):
         with self.assertRaisesRegex(
-                Exception, "Shutdown command isn't available for the current device"
+            Exception, "Shutdown command isn't available for the current device"
         ):
             self.state_flow.shutdown()
 
     def test_health_check(self):
         result = self.state_flow.health_check()
 
-        self.assertIn('passed', result)
+        self.assertIn("passed", result)
         self.api.SetResourceLiveStatus.assert_called_once_with(
             self.resource_config.name, "Online", result
         )
