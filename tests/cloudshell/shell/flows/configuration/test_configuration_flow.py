@@ -25,17 +25,25 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
             def save_flow(self):
                 pass
 
-        self.config_flow = ConfigurationFlow(logger=self.logger, resource_config=self.resource_config)
+        self.config_flow = ConfigurationFlow(
+            logger=self.logger, resource_config=self.resource_config
+        )
 
     def test_abstract_methods(self):
-        """Check that instance can't be instantiated without implementation of the all abstract methods"""
-        class TestedClass(AbstractConfigurationFlow):
-            pass
+        """Check that all abstract methods are implemented.
 
-        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class TestedClass with abstract methods "
-                                                "_file_system, _restore_flow, _save_flow"):
-            TestedClass(logger=self.logger,
-                        resource_config=self.resource_config)
+        Instance can't be instantiated without implementation of all abstract methods
+        """
+        with self.assertRaisesRegexp(
+            TypeError,
+            "Can't instantiate abstract class TestedClass with abstract methods "
+            "_file_system, _restore_flow, _save_flow",
+        ):
+
+            class TestedClass(AbstractConfigurationFlow):
+                pass
+
+            TestedClass(logger=self.logger, resource_config=self.resource_config)
 
     def test_save(self):
         expected_path = "expected full path"
@@ -46,17 +54,22 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
         self.config_flow._validate_configuration_type = mock.MagicMock()
         # act
-        result = self.config_flow.save(folder_path=folder_path,
-                                       configuration_type=config_type,
-                                       vrf_management_name=None,
-                                       return_artifact=False)
+        result = self.config_flow.save(
+            folder_path=folder_path,
+            configuration_type=config_type,
+            vrf_management_name=None,
+            return_artifact=False,
+        )
         # verify
         self.assertEqual(result, expected_path)
-        self.config_flow._validate_configuration_type.assert_called_once_with(config_type)
+        self.config_flow._validate_configuration_type.assert_called_once_with(
+            config_type
+        )
         self.config_flow._save_flow.assert_called_once_with(
             folder_path=expected_path,
             configuration_type=config_type,
-            vrf_management_name=self.resource_config.vrf_management_name)
+            vrf_management_name=self.resource_config.vrf_management_name,
+        )
 
     def test_restore(self):
         expected_path = "expected full path"
@@ -68,16 +81,19 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
         self.config_flow._validate_configuration_type = mock.MagicMock()
         # act
-        self.config_flow.restore(path=path,
-                                 configuration_type=config_type,
-                                 restore_method=restore_method,
-                                 vrf_management_name=None)
+        self.config_flow.restore(
+            path=path,
+            configuration_type=config_type,
+            restore_method=restore_method,
+            vrf_management_name=None,
+        )
         # verify
         self.config_flow._restore_flow.assert_called_once_with(
             path=expected_path,
             configuration_type=config_type,
             restore_method=restore_method,
-            vrf_management_name=self.resource_config.vrf_management_name)
+            vrf_management_name=self.resource_config.vrf_management_name,
+        )
 
     def test_orchestration_save(self):
         pass
@@ -90,16 +106,18 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
     def test_validate_configuration_type__invalid_config_type(self):
         config_type = "invalid"
         # act # verify
-        with self.assertRaisesRegex(Exception, "Configuration Type is invalid. Should be startup or running"):
-            self.config_flow._validate_configuration_type(configuration_type=config_type)
+        with self.assertRaisesRegex(
+            Exception, "Configuration Type is invalid. Should be startup or running"
+        ):
+            self.config_flow._validate_configuration_type(
+                configuration_type=config_type
+            )
 
     @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
     def test_get_path(self, url_parser_class):
-        """Check that method will return UrlParser.build_url() result"""
+        """Check that method will return UrlParser.build_url() result."""
         path = "some path"
-        url = {
-            url_parser_class.SCHEME: 'ftp'
-        }
+        url = {url_parser_class.SCHEME: "ftp"}
         url_parser_class.parse_url.return_value = url
         builded_url = mock.MagicMock()
         url_parser_class.build_url.return_value = builded_url
@@ -111,7 +129,7 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
 
     @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
     def test_get_path_with_empty_path(self, url_parser_class):
-        """Check that method will use backup location and backup type if path argument is missing"""
+        """Check that method will use backup location and backup type."""
         self.resource_config.backup_location = "backup_location"
         self.resource_config.backup_type = "backup_type"
         url = mock.MagicMock()
@@ -119,20 +137,26 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         # act
         self.config_flow._get_path()
         # verify
-        url_parser_class.parse_url.assert_called_once_with("backup_type://backup_location")
+        url_parser_class.parse_url.assert_called_once_with(
+            "backup_type://backup_location"
+        )
 
     @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
     def test_get_path_failed_to_build_url(self, url_parser_class):
-        """Check that method will raise Exception if it unable to build the URL"""
+        """Check that method will raise Exception if it unable to build the URL."""
         url_parser_class.build_url.side_effect = Exception
         # act
-        with self.assertRaisesRegexp(Exception, "Failed to build path url to remote host"):
+        with self.assertRaisesRegexp(
+            Exception, "Failed to build path url to remote host"
+        ):
             self.config_flow._get_path(path="some path")
 
     def test_get_path_for_default_file_system(self):
-        self.resource_config.backup_location = 'resource_startup.cfg'
+        self.resource_config.backup_location = "resource_startup.cfg"
         self.resource_config.backup_type = self.config_flow._file_system
-        expected_path = '{}//{}'.format(self.config_flow._file_system, self.resource_config.backup_location)
+        expected_path = "{}//{}".format(
+            self.config_flow._file_system, self.resource_config.backup_location
+        )
         # act
         path = self.config_flow._get_path()
         # verify

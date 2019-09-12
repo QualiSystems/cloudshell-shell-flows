@@ -12,13 +12,19 @@ class TestRunCommandFlow(unittest.TestCase):
         self.config_session = mock.MagicMock()
         self.cli_configurator = mock.MagicMock(
             enable_mode_service=mock.MagicMock(
-                return_value=mock.MagicMock(__enter__=mock.MagicMock(return_value=self.enable_session))
+                return_value=mock.MagicMock(
+                    __enter__=mock.MagicMock(return_value=self.enable_session)
+                )
             ),
             config_mode_service=mock.MagicMock(
-                return_value=mock.MagicMock(__enter__=mock.MagicMock(return_value=self.config_session))
-            )
+                return_value=mock.MagicMock(
+                    __enter__=mock.MagicMock(return_value=self.config_session)
+                )
+            ),
         )
-        self.run_flow = RunCommandFlow(logger=self.logger, cli_configurator=self.cli_configurator)
+        self.run_flow = RunCommandFlow(
+            logger=self.logger, cli_configurator=self.cli_configurator
+        )
 
     def test_run_custom_command(self):
         custom_command = "test custom command"
@@ -27,7 +33,9 @@ class TestRunCommandFlow(unittest.TestCase):
         # act
         result = self.run_flow.run_custom_command(custom_command)
         # verify
-        self.run_flow._run_command_flow.assert_called_once_with(custom_command=custom_command)
+        self.run_flow._run_command_flow.assert_called_once_with(
+            custom_command=custom_command
+        )
         self.assertEqual(result, expected_result)
 
     def test_run_custom_config_command(self):
@@ -37,12 +45,16 @@ class TestRunCommandFlow(unittest.TestCase):
         # act
         result = self.run_flow.run_custom_config_command(custom_command)
         # verify
-        self.run_flow._run_command_flow.assert_called_once_with(custom_command=custom_command, is_config=True)
+        self.run_flow._run_command_flow.assert_called_once_with(
+            custom_command=custom_command, is_config=True
+        )
         self.assertEqual(result, expected_result)
 
     def test_parse_custom_commands(self):
         # act
-        result = self.run_flow.parse_custom_commands(command="test command1;test command2")
+        result = self.run_flow.parse_custom_commands(
+            command="test command1;test command2"
+        )
         # verify
         self.assertEqual(result, ["test command1", "test command2"])
 
@@ -61,7 +73,9 @@ class TestRunCommandFlow(unittest.TestCase):
         expected_cmd_response = "test command response"
         self.config_session.send_command.return_value = expected_cmd_response
         # act
-        result = self.run_flow._run_command_flow(custom_command=custom_command, is_config=True)
+        result = self.run_flow._run_command_flow(
+            custom_command=custom_command, is_config=True
+        )
         # verify
         self.config_session.send_command.assert_called_once_with(command=custom_command)
         self.assertEqual(result, expected_cmd_response)

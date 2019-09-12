@@ -29,7 +29,7 @@ class TestStateFlow(unittest.TestCase):
         )
 
     def test_shutdown(self):
-        """Check that method will raise exception"""
+        """Check that method will raise exception."""
         with self.assertRaisesRegexp(
             Exception, "Shutdown command isn't available for the current device"
         ):
@@ -37,7 +37,7 @@ class TestStateFlow(unittest.TestCase):
 
     @mock.patch("cloudshell.shell.flows.state.basic_flow.RunCommandFlow")
     def test_health_check_passed(self, run_command_flow_class):
-        """Check that method will execute RunCommandFlow and return success message"""
+        """Check that method will execute RunCommandFlow and return success message."""
         run_command_flow = mock.MagicMock()
         run_command_flow_class.return_value = run_command_flow
         # act
@@ -58,7 +58,7 @@ class TestStateFlow(unittest.TestCase):
 
     @mock.patch("cloudshell.shell.flows.state.basic_flow.RunCommandFlow")
     def test_health_check_failed(self, run_command_flow_class):
-        """Check that method will execute RunCommandFlow and return failed message"""
+        """Check that method will execute RunCommandFlow and return failed message."""
         run_command_flow = mock.MagicMock(
             run_custom_command=mock.MagicMock(side_effect=Exception)
         )
@@ -76,7 +76,7 @@ class TestStateFlow(unittest.TestCase):
 
     @mock.patch("cloudshell.shell.flows.state.basic_flow.RunCommandFlow")
     def test_health_check_failed_to_update_live_status(self, run_command_flow_class):
-        """Check that method will handle """
+        """Check that method will not update live status. if health check fails."""
         self.api.SetResourceLiveStatus.side_effect = Exception()
         # act
         result = self.state_flow.health_check()
