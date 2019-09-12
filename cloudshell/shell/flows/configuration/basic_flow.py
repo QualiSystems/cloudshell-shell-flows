@@ -207,6 +207,5 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             and configuration_type.lower() != "startup"
         ):
             raise Exception(
-                self.__class__.__name__,
-                "Configuration Type is invalid. Should be startup or running",
+                "Configuration Type is invalid. Should be startup or running"
             )

@@ -272,7 +272,7 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
                             "Wrong VLANs range detected {}".format(vlan_str),
                         )
 
-        return map(str, list(result))
+        return [*map(str, result)]
 
     def _add_vlan_executor(self, vlan_id, full_name, port_mode, qnq, c_tag):
         """Run flow to add VLAN(s) to interface.
@@ -294,7 +294,7 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())
-            self.result[current_thread().name].append((False, e.message))
+            self.result[current_thread().name].append((False, str(e)))
 
     def _remove_vlan_executor(self, vlan_id, full_name, port_mode):
         """Run flow to remove VLAN(s) from interface.
@@ -311,4 +311,4 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
             self.result[current_thread().name].append((True, action_result))
         except Exception as e:
             self._logger.error(traceback.format_exc())
-            self.result[current_thread().name].append((False, e.message))
+            self.result[current_thread().name].append((False, str(e)))

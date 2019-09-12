@@ -3,5 +3,6 @@ tox
 tox-factor
 -r test_requirements.txt
 
+jsonpickle
 -e git+https://github.com/QualiSystems/cloudshell-logging.git@dev#egg=cloudshell-logging
 -e git+https://github.com/QualiSystems/cloudshell-core.git@dev#egg=cloudshell-core
