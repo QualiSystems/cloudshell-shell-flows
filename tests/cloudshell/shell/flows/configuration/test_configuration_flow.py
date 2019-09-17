@@ -1,7 +1,12 @@
+import sys
 import unittest
-from unittest import mock
 
 from cloudshell.shell.flows.configuration.basic_flow import AbstractConfigurationFlow
+
+if sys.version_info >= (3, 0):
+    from unittest import mock
+else:
+    import mock
 
 
 class TestAbstractConfigurationFlow(unittest.TestCase):
@@ -105,8 +110,13 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
 
     def test_validate_configuration_type__invalid_config_type(self):
         config_type = "invalid"
+        if sys.version_info >= (3, 0):
+            assert_regex = self.assertRaisesRegex
+        else:
+            assert_regex = self.assertRaisesRegexp
+
         # act # verify
-        with self.assertRaisesRegex(
+        with assert_regex(
             Exception, "Configuration Type is invalid. Should be startup or running"
         ):
             self.config_flow._validate_configuration_type(

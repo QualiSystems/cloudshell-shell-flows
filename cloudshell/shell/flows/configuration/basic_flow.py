@@ -3,7 +3,7 @@
 
 import re
 import time
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 from posixpath import join
 
 import jsonpickle
@@ -45,8 +45,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         """
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def _file_system(self):
         """File system attribute, has to be implemented.
 

@@ -1,7 +1,12 @@
+import sys
 import unittest
-from unittest import mock
 
 from cloudshell.shell.flows.state.basic_flow import StateFlow
+
+if sys.version_info >= (3, 0):
+    from unittest import mock
+else:
+    import mock
 
 
 class TestStateFlow(unittest.TestCase):

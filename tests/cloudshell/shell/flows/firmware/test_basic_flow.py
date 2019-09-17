@@ -1,7 +1,12 @@
+import sys
 import unittest
-from unittest import mock
 
 from cloudshell.shell.flows.firmware.basic_flow import AbstractFirmwareFlow
+
+if sys.version_info >= (3, 0):
+    from unittest import mock
+else:
+    import mock
 
 
 class TestAbstractFirmwareFlow(unittest.TestCase):
