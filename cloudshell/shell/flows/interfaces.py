@@ -1,4 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
+
+ABC = ABCMeta("ABC", (object,), {"__slots__": ()})
 
 
 class ConnectivityFlowInterface(ABC):

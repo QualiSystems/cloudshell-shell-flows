@@ -26,5 +26,5 @@ class JsonRequestDeserializer(object):
 
     @staticmethod
     def _is_primitive(thing):
-        primitive = (int, str, bool, float)
+        primitive = (int, (type(""), type(u"")), bool, float)
         return isinstance(thing, primitive)

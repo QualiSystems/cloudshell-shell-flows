@@ -1,6 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from urllib.parse import urlsplit, urlunsplit
+import sys
+
+if sys.version_info >= (3, 0):
+    from urllib.parse import urlsplit, urlunsplit
+else:
+    from urlparse import urlsplit, urlunsplit
 
 
 class UrlParser(object):

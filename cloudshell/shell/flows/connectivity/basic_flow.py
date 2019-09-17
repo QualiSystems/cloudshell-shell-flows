@@ -272,7 +272,7 @@ class AbstractConnectivityFlow(ConnectivityFlowInterface):
                             "Wrong VLANs range detected {}".format(vlan_str),
                         )
 
-        return [*map(str, result)]
+        return list(map(str, result))
 
     def _add_vlan_executor(self, vlan_id, full_name, port_mode, qnq, c_tag):
         """Run flow to add VLAN(s) to interface.

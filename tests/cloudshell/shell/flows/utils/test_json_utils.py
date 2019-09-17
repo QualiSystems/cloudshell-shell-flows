@@ -1,6 +1,12 @@
-from unittest import TestCase, mock
+import sys
+from unittest import TestCase
 
 from cloudshell.shell.flows.utils.json_utils import JsonRequestDeserializer
+
+if sys.version_info >= (3, 0):
+    from unittest import mock
+else:
+    import mock
 
 
 class TestJsonRequestDeserializer(TestCase):

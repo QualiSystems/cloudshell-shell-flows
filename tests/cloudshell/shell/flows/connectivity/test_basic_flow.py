@@ -1,8 +1,13 @@
+import sys
 import unittest
 from collections import defaultdict
-from unittest import mock
 
 from cloudshell.shell.flows.connectivity.basic_flow import AbstractConnectivityFlow
+
+if sys.version_info >= (3, 0):
+    from unittest import mock
+else:
+    import mock
 
 
 class TestConnectivityRunner(unittest.TestCase):

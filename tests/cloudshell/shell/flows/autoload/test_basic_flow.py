@@ -1,7 +1,12 @@
+import sys
 import unittest
-from unittest.mock import MagicMock
 
 from cloudshell.shell.flows.autoload.basic_flow import AbstractAutoloadFlow
+
+if sys.version_info >= (3, 0):
+    from unittest.mock import MagicMock
+else:
+    from mock import MagicMock
 
 
 class TestAbstractAutoloadFlow(unittest.TestCase):
@@ -54,7 +59,7 @@ class TestAbstractAutoloadFlow(unittest.TestCase):
         self.autoload_flow._log_device_details(details=self.autoload_details)
         # verify
         self.logger.info.assert_called_once_with(
-            f'Device Vendor: "{self.vendor_attr_name}", '
-            f'Model: "{self.model_attr_name}", '
-            f'OS Version: ""'
+            'Device Vendor: "{}", '
+            'Model: "{}", '
+            'OS Version: ""'.format(self.vendor_attr_name, self.model_attr_name)
         )
