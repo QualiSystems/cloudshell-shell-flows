@@ -1,3 +1,4 @@
+import datetime
 import sys
 import unittest
 
@@ -51,9 +52,13 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
             TestedClass(logger=self.logger, resource_config=self.resource_config)
 
     def test_save(self):
+        today_str = datetime.date.today().strftime("%d%m%y")
         expected_path = "expected full path"
         folder_path = "test path"
         config_type = "running"
+        expected_file_name_pattern = r"test_name-{}-{}-\d{{6}}".format(
+            config_type, today_str
+        )
         self.resource_config.name = "test name"
         self.config_flow._save_flow = mock.MagicMock()
         self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
@@ -66,7 +71,7 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
             return_artifact=False,
         )
         # verify
-        self.assertEqual(result, expected_path)
+        self.assertRegexpMatches(result, expected_file_name_pattern)
         self.config_flow._validate_configuration_type.assert_called_once_with(
             config_type
         )
