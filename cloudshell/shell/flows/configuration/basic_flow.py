@@ -90,7 +90,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             vrf_management_name=vrf_management_name
             or getattr(self.resource_config, "vrf_management_name", None),
         )
-        return folder_path
+        return destination_filename
 
     @command_logging
     def restore(
