@@ -3,6 +3,7 @@
 
 import re
 import time
+import warnings
 from abc import abstractmethod, abstractproperty
 from posixpath import join
 
@@ -162,7 +163,10 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             configuration on the device
         :param custom_params: custom parameters
         """
-        pass
+        warnings.warn(
+            "orchestration_restore is deprecated. Use 'restore' instead",
+            DeprecationWarning,
+        )
 
     def _get_path(self, path=""):
         """Validate incoming path.
