@@ -134,8 +134,9 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :param mode:
         :param custom_params: json with all required action to configure or remove
             vlans from certain port
-        :return Serialized OrchestrationSavedArtifact to json
-        :rtype json
+        :type custom_params: str
+        :return: path to the saved config file
+        :rtype: str
         """
         save_params = {
             "folder_path": "",
