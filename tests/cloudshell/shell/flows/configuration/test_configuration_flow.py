@@ -1,5 +1,6 @@
 import sys
 import unittest
+import warnings
 
 from cloudshell.shell.flows.configuration.basic_flow import AbstractConfigurationFlow
 
@@ -171,3 +172,18 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         path = self.config_flow._get_path()
         # verify
         self.assertEqual(expected_path, path)
+
+    def test_orchestration_restore_show_warning(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            # act
+            self.config_flow.orchestration_restore(mock.MagicMock())
+
+            # verify
+            self.assertEqual(1, len(w))
+            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+            self.assertEqual(
+                "orchestration_restore is deprecated. Use 'restore' instead",
+                str(w[0].message),
+            )
