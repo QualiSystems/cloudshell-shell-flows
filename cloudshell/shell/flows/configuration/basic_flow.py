@@ -140,7 +140,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         save_params = {
             "folder_path": "",
             "configuration_type": "running",
-            "return_artifact": True,
+            "return_full_path": True,
         }
         params = {}
         if custom_params:
