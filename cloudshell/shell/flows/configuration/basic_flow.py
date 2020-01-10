@@ -60,7 +60,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         folder_path="",
         configuration_type="running",
         vrf_management_name=None,
-        return_artifact=False,
+        return_full_path=False,
     ):
         """Backup config from the device to provided file system.
 
@@ -71,9 +71,11 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :param configuration_type: type of configuration that will be saved
             (StartUp or Running)
         :param vrf_management_name: Virtual Routing and Forwarding management name
-        :param return_artifact:
-        :return: status message / exception
-        :rtype: OrchestrationSavedArtifact or str
+        :param return_full_path: return full path to saved config file which can
+            include username and password
+        :type return_full_path: bool
+        :return: file name or full path to the file (can include username and password)
+        :rtype: str
         """
         self._validate_configuration_type(configuration_type)
         folder_path = self._get_path(folder_path)
@@ -83,14 +85,16 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             system_name, configuration_type.lower(), time_stamp
         )
         full_path = join(folder_path, destination_filename)
-        folder_path = self._get_path(full_path)
+        full_path = self._get_path(full_path)
         self._save_flow(
-            folder_path=folder_path,
+            folder_path=full_path,
             configuration_type=configuration_type.lower(),
             vrf_management_name=vrf_management_name
             or getattr(self.resource_config, "vrf_management_name", None),
         )
-        return destination_filename
+
+        output = full_path if return_full_path else destination_filename
+        return output
 
     @command_logging
     def restore(
@@ -195,16 +199,14 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             )
         return result
 
-    def _validate_configuration_type(self, configuration_type):
+    @staticmethod
+    def _validate_configuration_type(configuration_type):
         """Validate configuration type.
 
         :param configuration_type: configuration_type, should be Startup or Running
         :raise Exception:
         """
-        if (
-            configuration_type.lower() != "running"
-            and configuration_type.lower() != "startup"
-        ):
+        if configuration_type.lower() not in ("running", "startup"):
             raise Exception(
                 "Configuration Type is invalid. Should be startup or running"
             )
