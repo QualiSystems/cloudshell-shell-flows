@@ -107,7 +107,31 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         )
 
     def test_orchestration_save(self):
-        pass
+        today_time_str = "100120-142011"
+        resource_name = "resource name"
+        config_type = "running"
+        expected_file_name = r"{}-{}-{}".format(
+            resource_name.replace(" ", "_"), config_type, today_time_str
+        )
+        expected_path = "{}{}".format(
+            self.config_flow._file_system.rstrip("/"), expected_file_name
+        )
+        self.resource_config.backup_type = self.config_flow.DEFAULT_BACKUP_SCHEME
+        self.resource_config.backup_location = ""
+        self.resource_config.name = resource_name
+
+        # act
+        with mock.patch(
+            "cloudshell.shell.flows.configuration.basic_flow.time",
+            mock.MagicMock(strftime=mock.MagicMock(return_value=today_time_str)),
+        ) as time_mock:
+            full_path = self.config_flow.orchestration_save()
+
+        # verify
+        self.assertEqual(expected_path, full_path)
+        time_mock.strftime.assert_called_once_with(
+            "%d%m%y-%H%M%S", time_mock.localtime()
+        )
 
     def test_validate_configuration_type(self):
         config_type = "Running"
