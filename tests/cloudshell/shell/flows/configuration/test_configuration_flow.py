@@ -17,18 +17,12 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         self.api = mock.MagicMock()
 
         class ConfigurationFlow(AbstractConfigurationFlow):
-            def _save_flow(self):
-                pass
-
-            def _restore_flow(self):
-                pass
+            _save_flow = mock.MagicMock()
+            _restore_flow = mock.MagicMock()
 
             @property
             def _file_system(self):
                 return "flash:"
-
-            def save_flow(self):
-                pass
 
         self.config_flow = ConfigurationFlow(
             logger=self.logger, resource_config=self.resource_config
@@ -51,30 +45,40 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
             TestedClass(logger=self.logger, resource_config=self.resource_config)
 
     def test_save(self):
-        expected_path = "expected full path"
-        folder_path = "test path"
+        today_time_str = "100120-142011"
+        folder_path = "ftp://username:password@ftphost.example/configs_dir"
         config_type = "running"
-        self.resource_config.name = "test name"
-        self.config_flow._save_flow = mock.MagicMock()
-        self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
+        resource_name = "test name"
+        expected_file_name = r"{}-{}-{}".format(
+            resource_name.replace(" ", "_"), config_type, today_time_str
+        )
+        self.resource_config.name = resource_name
         self.config_flow._validate_configuration_type = mock.MagicMock()
+
         # act
-        result = self.config_flow.save(
-            folder_path=folder_path,
-            configuration_type=config_type,
-            vrf_management_name=None,
-            return_artifact=False,
-        )
-        # verify
-        self.assertEqual(result, expected_path)
-        self.config_flow._validate_configuration_type.assert_called_once_with(
-            config_type
-        )
-        self.config_flow._save_flow.assert_called_once_with(
-            folder_path=expected_path,
-            configuration_type=config_type,
-            vrf_management_name=self.resource_config.vrf_management_name,
-        )
+        with mock.patch(
+            "cloudshell.shell.flows.configuration.basic_flow.time",
+            mock.MagicMock(strftime=mock.MagicMock(return_value=today_time_str)),
+        ) as time_mock:
+            file_name = self.config_flow.save(
+                folder_path=folder_path,
+                configuration_type=config_type,
+                vrf_management_name=None,
+            )
+
+            # verify
+            time_mock.strftime.assert_called_once_with(
+                "%d%m%y-%H%M%S", time_mock.localtime()
+            )
+            self.assertEqual(expected_file_name, file_name)
+            self.config_flow._save_flow.assert_called_once_with(
+                folder_path="{}/{}".format(folder_path, expected_file_name),
+                configuration_type=config_type,
+                vrf_management_name=self.resource_config.vrf_management_name,
+            )
+            self.config_flow._validate_configuration_type.assert_called_once_with(
+                config_type
+            )
 
     def test_restore(self):
         expected_path = "expected full path"
@@ -82,7 +86,6 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         config_type = "running"
         restore_method = "override"
         self.resource_config.name = "test name"
-        self.config_flow._restore_flow = mock.MagicMock()
         self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
         self.config_flow._validate_configuration_type = mock.MagicMock()
         # act
@@ -99,9 +102,36 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
             restore_method=restore_method,
             vrf_management_name=self.resource_config.vrf_management_name,
         )
+        self.config_flow._validate_configuration_type.assert_called_once_with(
+            config_type
+        )
 
     def test_orchestration_save(self):
-        pass
+        today_time_str = "100120-142011"
+        resource_name = "resource name"
+        config_type = "running"
+        expected_file_name = r"{}-{}-{}".format(
+            resource_name.replace(" ", "_"), config_type, today_time_str
+        )
+        expected_path = "{}{}".format(
+            self.config_flow._file_system.rstrip("/"), expected_file_name
+        )
+        self.resource_config.backup_type = self.config_flow.DEFAULT_BACKUP_SCHEME
+        self.resource_config.backup_location = ""
+        self.resource_config.name = resource_name
+
+        # act
+        with mock.patch(
+            "cloudshell.shell.flows.configuration.basic_flow.time",
+            mock.MagicMock(strftime=mock.MagicMock(return_value=today_time_str)),
+        ) as time_mock:
+            full_path = self.config_flow.orchestration_save()
+
+        # verify
+        self.assertEqual(expected_path, full_path)
+        time_mock.strftime.assert_called_once_with(
+            "%d%m%y-%H%M%S", time_mock.localtime()
+        )
 
     def test_validate_configuration_type(self):
         config_type = "Running"
