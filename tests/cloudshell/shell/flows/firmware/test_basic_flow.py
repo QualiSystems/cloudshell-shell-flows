@@ -27,7 +27,7 @@ class TestAbstractFirmwareFlow(unittest.TestCase):
         with self.assertRaisesRegexp(
             TypeError,
             "Can't instantiate abstract class TestedClass with "
-            "abstract methods _load_firmware_flow",
+            "abstract methods? _load_firmware_flow",
         ):
 
             class TestedClass(AbstractFirmwareFlow):
