@@ -36,7 +36,7 @@ class TestAbstractConfigurationFlow(unittest.TestCase):
         """
         with self.assertRaisesRegexp(
             TypeError,
-            "Can't instantiate abstract class TestedClass with abstract methods "
+            "Can't instantiate abstract class TestedClass with abstract methods? "
             "_file_system, _restore_flow, _save_flow",
         ):
 
