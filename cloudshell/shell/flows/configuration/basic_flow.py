@@ -109,7 +109,6 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :return: file name
         :rtype: str
         """
-        self._validate_configuration_type(configuration_type)
         system_name = re.sub(r"\s+", "_", self.resource_config.name)
 
         time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
