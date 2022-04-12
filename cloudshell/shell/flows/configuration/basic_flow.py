@@ -212,6 +212,13 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         url = UrlParser.parse_url(path)
 
+        # if we don't have a scheme in the URL add Default File System to the URL
+        if not url[UrlParser.SCHEME] and url[UrlParser.PATH]:
+            new_path = path
+            if path.startswith("/"):
+                new_path = path[1:]
+            url = UrlParser.parse_url(f"{self._file_system}://{new_path}")
+
         if url[UrlParser.SCHEME].lower() in AUTHORIZATION_REQUIRED_STORAGE:
             if UrlParser.USERNAME not in url or not url[UrlParser.USERNAME]:
                 url[UrlParser.USERNAME] = self.resource_config.backup_user
