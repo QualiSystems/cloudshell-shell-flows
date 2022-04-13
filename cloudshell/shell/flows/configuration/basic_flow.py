@@ -8,6 +8,7 @@ from abc import abstractmethod, abstractproperty
 from posixpath import join
 
 import jsonpickle
+
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
@@ -18,6 +19,7 @@ AUTHORIZATION_REQUIRED_STORAGE = ["ftp", "sftp", "scp"]
 
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
     DEFAULT_BACKUP_SCHEME = "File System"
+    MAX_RESOURCE_NAME_LENGTH = 23
 
     def __init__(self, logger, resource_config):
         """Abstract configuration flow.
@@ -80,13 +82,12 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         """
         self._validate_configuration_type(configuration_type)
         folder_path = self._get_path(folder_path)
-        system_name = re.sub(r"\s+", "_", self.resource_config.name)[:23]
-        time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
-        destination_filename = "{0}-{1}-{2}".format(
-            system_name, configuration_type.lower(), time_stamp
-        )
+        destination_filename = self.generate_config_file_name(configuration_type)
         full_path = join(folder_path, destination_filename)
         full_path = self._get_path(full_path)
+        # ToDo: There is a chance that the file will be saved with a different name.
+        #  Should be changed in the next major release to accept
+        #  result from the _save_flow method.
         self._save_flow(
             folder_path=full_path,
             configuration_type=configuration_type.lower(),
@@ -96,6 +97,27 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
         output = full_path if return_full_path else destination_filename
         return output
+
+    def generate_config_file_name(self, configuration_type):
+        """Generate config file name.
+
+        Config can be 'startup-config' or 'running-config'
+        Also possible to backup config to localhost
+
+        :param configuration_type: type of configuration that will be saved
+            (StartUp or Running)
+        :return: file name
+        :rtype: str
+        """
+        system_name = re.sub(r"\s+", "_", self.resource_config.name)
+
+        time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
+        destination_filename = "{0}-{1}-{2}".format(
+            system_name[: self.MAX_RESOURCE_NAME_LENGTH],
+            configuration_type.lower(),
+            time_stamp,
+        )
+        return destination_filename
 
     @command_logging
     def restore(
