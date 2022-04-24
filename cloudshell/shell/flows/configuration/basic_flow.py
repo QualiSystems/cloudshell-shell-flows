@@ -217,7 +217,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             new_path = path
             if path.startswith("/"):
                 new_path = path[1:]
-            url = UrlParser.parse_url(f"{self._file_system}://{new_path}")
+            url = UrlParser.parse_url("{}://{}".format(self._file_system, new_path))
 
         if url[UrlParser.SCHEME].lower() in AUTHORIZATION_REQUIRED_STORAGE:
             if UrlParser.USERNAME not in url or not url[UrlParser.USERNAME]:
