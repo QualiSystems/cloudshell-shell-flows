@@ -1,6 +1,6 @@
-from abc import ABCMeta, abstractmethod
+from __future__ import annotations
 
-ABC = ABCMeta("ABC", (object,), {"__slots__": ()})
+from abc import ABC, abstractmethod
 
 
 class AutoloadFlowInterface(ABC):
@@ -11,22 +11,30 @@ class AutoloadFlowInterface(ABC):
 
 class ConfigurationFlowInterface(ABC):
     @abstractmethod
-    def save(self, folder_path, configuration_type, vrf_management_name=None):
-        pass
+    def save(
+        self,
+        folder_path: str,
+        configuration_type: str,
+        vrf_management_name: str | None = None,
+        return_full_path: bool = False,
+    ) -> str:
+        raise NotImplementedError
 
     @abstractmethod
     def restore(
-        self, path, configuration_type, restore_method, vrf_management_name=None
-    ):
-        pass
+        self,
+        path: str,
+        configuration_type: str,
+        restore_method: str,
+        vrf_management_name: str | None,
+    ) -> None:
+        raise NotImplementedError
 
     @abstractmethod
-    def orchestration_save(self, mode="shallow", custom_params=None):
-        pass
-
-    @abstractmethod
-    def orchestration_restore(self, saved_artifact_info, custom_params=None):
-        pass
+    def orchestration_save(
+        self, mode: str = "shallow", custom_params: str | None = None
+    ) -> str:
+        raise NotImplementedError
 
 
 class FirmwareFlowInterface(ABC):
