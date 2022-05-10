@@ -12,7 +12,11 @@ from cloudshell.shell.flows.configuration.basic_flow import (
     ConfigurationType,
     RestoreMethod,
 )
-from cloudshell.shell.flows.utils.url import ErrorParsingUrl, LocalFileURL
+from cloudshell.shell.flows.utils.url import (
+    ErrorParsingUrl,
+    FileNameIsNotPresent,
+    LocalFileURL,
+)
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
@@ -290,6 +294,19 @@ def test_restore_invalid_path(logger):
 
     with pytest.raises(ErrorParsingUrl):
         flow.restore("file", "running", "append")
+
+
+def test_restore_without_filename(logger):
+    class TestedFLow(AbstractConfigurationFlow):
+        file_system = None
+        _save_flow = None
+        _restore_flow = None
+
+    conf = ResourceConfig("")
+    flow = TestedFLow(logger, conf)
+
+    with pytest.raises(FileNameIsNotPresent):
+        flow.restore("ftp://host", "running", "append")
 
 
 def test_another_local_url(logger, local_time_str):

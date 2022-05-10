@@ -196,6 +196,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
                     url = self.LOCAL_URL_CLASS.from_str(config_path, self.file_system)
                 except ValidationError:
                     raise ErrorParsingUrl(config_path)
+        url.validate_filename_is_present()
         return url
 
     def _generate_folder_url_from_resource_config(
