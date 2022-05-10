@@ -51,6 +51,11 @@ class PathShouldStartFromRoot(ValidationError):
         super().__init__(f"Path '{path}' should start from root")
 
 
+class FileNameIsNotPresent(UrlError):
+    def __init__(self, url):
+        super().__init__(f"URL {url} do not include file name")
+
+
 def _validate_url_scheme(self, attribute, value: str) -> str:
     if value not in self.SUPPORTED_URL_SCHEMES:
         raise NotSupportedUrlScheme(value)
@@ -139,6 +144,10 @@ class AbstractUrlWithPosixPath(UrlInterface):
     def filename(self) -> str | None:
         return PurePosixPath(self.path).name
 
+    def validate_filename_is_present(self) -> None:
+        if not self.filename:
+            raise FileNameIsNotPresent(self)
+
     def add_filename(self, name: str) -> None:
         self.path = str(PurePosixPath(self.path) / name)
 
@@ -159,8 +168,8 @@ class RemoteURL(AbstractUrlWithPosixPath):
     tftp://host/path
     """
 
-    SUPPORTED_URL_SCHEMES = ("ftp", "sftp", "tftp", "scp", "http", "https")
-    SCHEMES_WITH_AUTH_SUPPORT = ("ftp", "sftp", "scp")
+    SUPPORTED_URL_SCHEMES = {"ftp", "sftp", "tftp", "scp", "http", "https"}
+    SCHEMES_WITH_AUTH_SUPPORT = {"ftp", "sftp", "scp"}
 
     scheme: str = attr.ib(
         converter=str.lower,
