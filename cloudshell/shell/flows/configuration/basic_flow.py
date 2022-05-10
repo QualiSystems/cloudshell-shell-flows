@@ -1,165 +1,114 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
 import re
 import time
-import warnings
-from abc import abstractmethod, abstractproperty
-from posixpath import join
+from abc import abstractmethod
+from enum import Enum
+from logging import Logger
+from typing import TYPE_CHECKING
 
 import jsonpickle
 
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
-from cloudshell.shell.flows.utils.networking_utils import UrlParser
+from cloudshell.shell.flows.utils.url import (
+    BasicLocalUrl,
+    ErrorParsingUrl,
+    RemoteURL,
+    ValidationError,
+)
 
-AUTHORIZATION_REQUIRED_STORAGE = ["ftp", "sftp", "scp"]
+if TYPE_CHECKING:
+    from cloudshell.shell.standards.resource_config_generic_models import (
+        GenericBackupConfig,
+    )
+
+
+class ConfigurationType(Enum):
+    RUNNING = "running"
+    STARTUP = "startup"
+
+    @classmethod
+    def from_str(cls, name: str) -> ConfigurationType:
+        # raised ValueError for invalid configuration type
+        return cls(name.lower())
+
+
+class RestoreMethod(Enum):
+    OVERRIDE = "override"
+    APPEND = "append"
+
+    @classmethod
+    def from_str(cls, name: str) -> RestoreMethod:
+        # raised ValueError for invalid restore method
+        return cls(name.lower())
 
 
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
-    DEFAULT_BACKUP_SCHEME = "File System"
-    MAX_RESOURCE_NAME_LENGTH = 23
+    FILE_SYSTEM_SCHEME = "File System"
+    MAX_CONFIG_FILE_NAME_LENGTH = 46  # prefix length is 23 symbols
+    REMOTE_URL_CLASS = RemoteURL
+    LOCAL_URL_CLASS = BasicLocalUrl
 
-    def __init__(self, logger, resource_config):
-        """Abstract configuration flow.
-
-        :param cloudshell.shell_standards.resource_config_generic_models.GenericBackupConfig resource_config:  # noqa: E501
-        :param logging.Logger logger:
-        """
+    def __init__(self, logger: Logger, resource_config: GenericBackupConfig):
         self._logger = logger
         self.resource_config = resource_config
 
+    @property
     @abstractmethod
-    def _save_flow(self, folder_path, configuration_type, vrf_management_name):
-        """Save flow, has to be implemented.
-
-        :return: SaveFlow object
-        """
-        pass
-
-    @abstractmethod
-    def _restore_flow(
-        self, path, configuration_type, restore_method, vrf_management_name
-    ):
-        """Restore flow, has to be implemented.
-
-        :return: RestoreFlow object
-        """
-        pass
-
-    @abstractproperty
-    def _file_system(self):
-        """File system attribute, has to be implemented.
-
-        :return: file system name
-        :rtype: str
-        """
-        pass
+    def file_system(self) -> str:
+        """Default File System scheme."""
+        raise NotImplementedError
 
     @command_logging
     def save(
         self,
-        folder_path="",
-        configuration_type="running",
-        vrf_management_name=None,
-        return_full_path=False,
-    ):
+        folder_path: str,
+        configuration_type: str,
+        vrf_management_name: str | None = None,
+        return_full_path: bool = False,
+    ) -> str:
         """Backup config from the device to provided file system.
 
-        Config can be 'startup-config' or 'running-config'
-        Also possible to backup config to localhost
-
-        :param folder_path:  tftp/ftp server where file be saved
+        :param folder_path: tftp/ftp server where file be saved
         :param configuration_type: type of configuration that will be saved
             (StartUp or Running)
         :param vrf_management_name: Virtual Routing and Forwarding management name
         :param return_full_path: return full path to saved config file which can
             include username and password
-        :type return_full_path: bool
         :return: file name or full path to the file (can include username and password)
-        :rtype: str
         """
-        self._validate_configuration_type(configuration_type)
-        folder_path = self._get_path(folder_path)
-        destination_filename = self.generate_config_file_name(configuration_type)
-        full_path = join(folder_path, destination_filename)
-        full_path = self._get_path(full_path)
-        # ToDo: There is a chance that the file will be saved with a different name.
-        #  Should be changed in the next major release to accept
-        #  result from the _save_flow method.
-        self._save_flow(
-            folder_path=full_path,
-            configuration_type=configuration_type.lower(),
-            vrf_management_name=vrf_management_name
-            or getattr(self.resource_config, "vrf_management_name", None),
-        )
+        configuration_type = ConfigurationType.from_str(configuration_type)
+        vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
 
-        output = full_path if return_full_path else destination_filename
-        return output
+        if folder_path:
+            url = self._get_folder_url(folder_path)
+        else:
+            url = self._generate_folder_url_from_resource_config()
+        self._add_auth(url)
+        file_name = self._generate_config_file_name(configuration_type)
+        url.add_filename(file_name)
 
-    def generate_config_file_name(self, configuration_type):
-        """Generate config file name.
+        new_file_name = self._save_flow(url, configuration_type, vrf_management_name)
+        if new_file_name:
+            url.replace_filename(new_file_name)
 
-        Config can be 'startup-config' or 'running-config'
-        Also possible to backup config to localhost
-
-        :param configuration_type: type of configuration that will be saved
-            (StartUp or Running)
-        :return: file name
-        :rtype: str
-        """
-        system_name = re.sub(r"\s+", "_", self.resource_config.name)
-
-        time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
-        destination_filename = "{0}-{1}-{2}".format(
-            system_name[: self.MAX_RESOURCE_NAME_LENGTH],
-            configuration_type.lower(),
-            time_stamp,
-        )
-        return destination_filename
+        if return_full_path:
+            file_path = str(url)
+        else:
+            file_path = url.filename
+        return file_path
 
     @command_logging
-    def restore(
-        self,
-        path,
-        configuration_type="running",
-        restore_method="override",
-        vrf_management_name=None,
-    ):
-        """Restore configuration on device from provided configuration file.
-
-        Restore configuration from local file system or ftp/tftp server into
-        'running-config' or 'startup-config'.
-
-        :param path: relative path to the file on the remote host
-            tftp://server/sourcefile
-        :param configuration_type: the configuration type to restore
-            (StartUp or Running)
-        :param restore_method: override current config or not
-        :param vrf_management_name: Virtual Routing and Forwarding management name
-        :return: exception on crash
-        """
-        self._validate_configuration_type(configuration_type)
-        path = self._get_path(path)
-        self._restore_flow(
-            path=path,
-            configuration_type=configuration_type.lower(),
-            restore_method=restore_method.lower(),
-            vrf_management_name=vrf_management_name
-            or getattr(self.resource_config, "vrf_management_name", None),
-        )
-
-    @command_logging
-    def orchestration_save(self, mode="shallow", custom_params=None):
+    def orchestration_save(
+        self, mode: str = "shallow", custom_params: str | None = None
+    ) -> str:
         """Orchestration Save command.
 
-        :param mode:
-        :param custom_params: json with all required action to configure or remove
-            vlans from certain port
-        :type custom_params: str
+        :param mode: is not used by current implementation
+        :param custom_params: json with custom params
         :return: path to the saved config file
-        :rtype: str
         """
         save_params = {
             "folder_path": "",
@@ -171,76 +120,123 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             params = jsonpickle.decode(custom_params)
 
         save_params.update(params.get("custom_params", {}))
-        save_params["folder_path"] = self._get_path(save_params["folder_path"])
-
         path = self.save(**save_params)
 
         return path
 
     @command_logging
-    def orchestration_restore(self, saved_artifact_info, custom_params=None):
-        """Orchestration restore.
+    def restore(
+        self,
+        path: str,
+        configuration_type: str,
+        restore_method: str,
+        vrf_management_name: str | None = None,
+    ) -> None:
+        """Restore configuration on device from provided configuration file.
 
-        :param saved_artifact_info: json with all required data to restore
-            configuration on the device
-        :param custom_params: custom parameters
+        Restore configuration from local file system or ftp/tftp server into
+        'running-config' or 'startup-config'.
+        :param path: path to the file on the remote host, tftp://server/sourcefile
+        :param configuration_type: the configuration type to restore
+            (StartUp or Running)
+        :param restore_method: override current config or not
+        :param vrf_management_name: Virtual Routing and Forwarding management name
         """
-        warnings.warn(
-            "orchestration_restore is deprecated. Use 'restore' instead",
-            DeprecationWarning,
-        )
+        configuration_type = ConfigurationType.from_str(configuration_type)
+        vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
+        restore_method = RestoreMethod.from_str(restore_method)
 
-    def _get_path(self, path=""):
-        """Validate incoming path.
+        url = self._get_config_url(path)
+        self._add_auth(url)
+        self._restore_flow(url, configuration_type, restore_method, vrf_management_name)
 
-        If path is empty, build it from resource attributes,
-        If path is invalid - raise exception
+    @abstractmethod
+    def _save_flow(
+        self,
+        file_dst_url: REMOTE_URL_CLASS | LOCAL_URL_CLASS,
+        configuration_type: ConfigurationType,
+        vrf_management_name: str | None,
+    ) -> str | None:
+        """Save flow, has to be implemented.
 
-        :param path: path to remote file storage
-        :return: valid path or :raise Exception:
+        :return: returns filename if changed it
         """
-        if not path:
-            host = self.resource_config.backup_location
-            if ":" not in host:
-                scheme = self.resource_config.backup_type
-                if not scheme or scheme.lower() == self.DEFAULT_BACKUP_SCHEME.lower():
-                    scheme = self._file_system
-                scheme = re.sub("(:|/+).*$", "", scheme, re.DOTALL)
-                host = re.sub("^/+", "", host)
-                host = "{}://{}".format(scheme, host)
-            path = host
+        raise NotImplementedError
 
-        url = UrlParser.parse_url(path)
+    @abstractmethod
+    def _restore_flow(
+        self,
+        config_path: REMOTE_URL_CLASS | LOCAL_URL_CLASS,
+        configuration_type: ConfigurationType,
+        restore_method: RestoreMethod,
+        vrf_management_name: str | None,
+    ) -> None:
+        """Restore flow, has to be implemented."""
+        raise NotImplementedError
 
-        # if we don't have a scheme in the URL add Default File System to the URL
-        if not url[UrlParser.SCHEME] and url[UrlParser.PATH]:
-            new_path = path
-            if path.startswith("/"):
-                new_path = path[1:]
-            url = UrlParser.parse_url("{}://{}".format(self._file_system, new_path))
-
-        if url[UrlParser.SCHEME].lower() in AUTHORIZATION_REQUIRED_STORAGE:
-            if UrlParser.USERNAME not in url or not url[UrlParser.USERNAME]:
-                url[UrlParser.USERNAME] = self.resource_config.backup_user
-            if UrlParser.PASSWORD not in url or not url[UrlParser.PASSWORD]:
-                url[UrlParser.PASSWORD] = self.resource_config.backup_password
+    def _get_folder_url(self, path: str) -> REMOTE_URL_CLASS | LOCAL_URL_CLASS:
         try:
-            result = UrlParser.build_url(url)
-        except Exception as e:
-            self._logger.error("Failed to build url: {}".format(e))
-            raise Exception(
-                "ConfigurationOperations", "Failed to build path url to remote host"
-            )
-        return result
+            url = self.REMOTE_URL_CLASS.from_str(path)
+        except ValidationError:
+            try:
+                url = self.LOCAL_URL_CLASS.from_str(path)
+            except ValidationError:
+                raise ErrorParsingUrl(path)
+        return url
 
-    @staticmethod
-    def _validate_configuration_type(configuration_type):
-        """Validate configuration type.
+    def _get_config_url(self, config_path: str) -> REMOTE_URL_CLASS | LOCAL_URL_CLASS:
+        try:
+            url = self.REMOTE_URL_CLASS.from_str(config_path)
+        except ValidationError:
+            try:
+                url = self.LOCAL_URL_CLASS.from_str(config_path)
+            except ValidationError:
+                # if config_path is a file name we can get the URL with a default system
+                try:
+                    url = self.LOCAL_URL_CLASS.from_str(config_path, self.file_system)
+                except ValidationError:
+                    raise ErrorParsingUrl(config_path)
+        return url
 
-        :param configuration_type: configuration_type, should be Startup or Running
-        :raise Exception:
+    def _generate_folder_url_from_resource_config(
+        self,
+    ) -> REMOTE_URL_CLASS | LOCAL_URL_CLASS:
+        backup_location = self.resource_config.backup_location
+        try:
+            # backup location can contain full URL with the scheme
+            url = self.REMOTE_URL_CLASS.from_str(backup_location)
+        except ValidationError:
+            # or without scheme 🤷
+            scheme = self.resource_config.backup_type
+            if not scheme or scheme.lower() == self.FILE_SYSTEM_SCHEME.lower():
+                scheme = self.file_system
+                url = self.LOCAL_URL_CLASS.from_str(backup_location, scheme)
+            else:
+                url = self.REMOTE_URL_CLASS.from_str(backup_location, scheme)
+        return url
+
+    def _add_auth(self, url: REMOTE_URL_CLASS | LOCAL_URL_CLASS) -> None:
+        if url.support_auth():
+            if not url.username:
+                url.username = self.resource_config.backup_user
+            if not url.password:
+                url.password = self.resource_config.backup_password
+
+    def _get_vrf_mgmt_name(self, vrf_name: str | None) -> str:
+        return vrf_name or getattr(self.resource_config, "vrf_management_name", None)
+
+    def _generate_config_file_name(self, configuration_type: ConfigurationType) -> str:
+        """Generate config file name.
+
+        <resource-name>-<configuration-type>-<date-time>
+        Note: resource name can be truncated
+        e.g. cisco-running-030522-125534
         """
-        if configuration_type.lower() not in ("running", "startup"):
-            raise Exception(
-                "Configuration Type is invalid. Should be startup or running"
-            )
+        time_stamp = time.strftime("%d%m%y-%H%M%S", time.localtime())
+        prefix = f"-{configuration_type.value}-{time_stamp}"
+        assert len(prefix) < self.MAX_CONFIG_FILE_NAME_LENGTH
+        resource_name_limit = self.MAX_CONFIG_FILE_NAME_LENGTH - len(prefix)
+
+        system_name = re.sub(r"\s+", "_", self.resource_config.name)
+        dst_filename = f"{system_name[:resource_name_limit]}{prefix}"
+        return dst_filename
