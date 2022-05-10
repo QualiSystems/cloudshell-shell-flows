@@ -53,7 +53,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
 
     def __init__(self, logger: Logger, resource_config: GenericBackupConfig):
         self._logger = logger
-        self.resource_config = resource_config
+        self._resource_config = resource_config
 
     @property
     @abstractmethod
@@ -202,13 +202,13 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
     def _generate_folder_url_from_resource_config(
         self,
     ) -> REMOTE_URL_CLASS | LOCAL_URL_CLASS:
-        backup_location = self.resource_config.backup_location
+        backup_location = self._resource_config.backup_location
         try:
             # backup location can contain full URL with the scheme
             url = self.REMOTE_URL_CLASS.from_str(backup_location)
         except ValidationError:
             # or without scheme 🤷
-            scheme = self.resource_config.backup_type
+            scheme = self._resource_config.backup_type
             if not scheme or scheme.lower() == self.FILE_SYSTEM_SCHEME.lower():
                 scheme = self.file_system
                 url = self.LOCAL_URL_CLASS.from_str(backup_location, scheme)
@@ -219,12 +219,12 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
     def _add_auth(self, url: REMOTE_URL_CLASS | LOCAL_URL_CLASS) -> None:
         if url.support_auth():
             if not url.username:
-                url.username = self.resource_config.backup_user
+                url.username = self._resource_config.backup_user
             if not url.password:
-                url.password = self.resource_config.backup_password
+                url.password = self._resource_config.backup_password
 
-    def _get_vrf_mgmt_name(self, vrf_name: str | None) -> str:
-        return vrf_name or getattr(self.resource_config, "vrf_management_name", None)
+    def _get_vrf_mgmt_name(self, vrf_name: str | None) -> str | None:
+        return vrf_name or getattr(self._resource_config, "vrf_management_name", None)
 
     def _generate_config_file_name(self, configuration_type: ConfigurationType) -> str:
         """Generate config file name.
@@ -238,6 +238,6 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         assert len(prefix) < self.MAX_CONFIG_FILE_NAME_LENGTH
         resource_name_limit = self.MAX_CONFIG_FILE_NAME_LENGTH - len(prefix)
 
-        system_name = re.sub(r"\s+", "_", self.resource_config.name)
+        system_name = re.sub(r"\s+", "_", self._resource_config.name)
         dst_filename = f"{system_name[:resource_name_limit]}{prefix}"
         return dst_filename
