@@ -240,18 +240,18 @@ def test_interface_methods_not_implemented():
 
         @property
         def url(self) -> str:
-            super().url
+            return super().url
 
         @property
         def safe_url(self) -> str:
-            super().safe_url
+            return super().safe_url
 
         @property
         def filename(self) -> str | None:
-            super().filename
+            return super().filename
 
         def support_auth(self) -> bool:
-            super().support_auth()
+            return super().support_auth()
 
         def add_filename(self, name: str) -> None:
             super().add_filename(name)
@@ -260,7 +260,7 @@ def test_interface_methods_not_implemented():
             super().replace_filename(name)
 
         def get_folder(self) -> str:
-            super().get_folder()
+            return super().get_folder()
 
     url = TestURL()
     with pytest.raises(NotImplementedError):
@@ -268,11 +268,11 @@ def test_interface_methods_not_implemented():
     with pytest.raises(NotImplementedError):
         str(url)
     with pytest.raises(NotImplementedError):
-        url.url
+        _ = url.url
     with pytest.raises(NotImplementedError):
-        url.safe_url
+        _ = url.safe_url
     with pytest.raises(NotImplementedError):
-        url.filename
+        _ = url.filename
     with pytest.raises(NotImplementedError):
         url.support_auth()
     with pytest.raises(NotImplementedError):
