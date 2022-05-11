@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import RunCommandFlowInterface

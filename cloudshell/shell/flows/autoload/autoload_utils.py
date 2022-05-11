@@ -10,12 +10,12 @@ def get_device_name(file_name, sys_obj_id, delimiter=":"):
     :rtype: str
     """
     try:
-        with open(file_name, "r") as csv_file:
+        with open(file_name) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=delimiter)
             for row in csv_reader:
                 if len(row) >= 2 and row[0] == sys_obj_id:
                     return row[1]
-    except IOError:
-        pass  # file does not exists
+    except OSError:
+        pass  # file does not exist
 
     return sys_obj_id

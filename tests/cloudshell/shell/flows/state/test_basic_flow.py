@@ -1,12 +1,7 @@
-import sys
 import unittest
+from unittest import mock
 
 from cloudshell.shell.flows.state.basic_flow import StateFlow
-
-if sys.version_info >= (3, 0):
-    from unittest import mock
-else:
-    import mock
 
 
 class TestStateFlow(unittest.TestCase):
@@ -16,7 +11,7 @@ class TestStateFlow(unittest.TestCase):
         self.resource_config = mock.MagicMock()
         self.session = mock.MagicMock(
             send_command=mock.MagicMock(
-                side_effect=lambda command: "Output of {!r}".format(command)
+                side_effect=lambda command: f"Output of {command!r}"
             )
         )
         self.cli_configurator = mock.MagicMock(
@@ -35,7 +30,7 @@ class TestStateFlow(unittest.TestCase):
 
     def test_shutdown(self):
         """Check that method will raise exception."""
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             Exception, "Shutdown command isn't available for the current device"
         ):
             self.state_flow.shutdown()
@@ -50,7 +45,7 @@ class TestStateFlow(unittest.TestCase):
         # verify
         self.assertEqual(
             result,
-            "Health check on resource {} passed.".format(self.resource_config.name),
+            f"Health check on resource {self.resource_config.name} passed.",
         )
 
         run_command_flow_class.assert_called_once_with(
@@ -73,7 +68,7 @@ class TestStateFlow(unittest.TestCase):
         # verify
         self.assertEqual(
             result,
-            "Health check on resource {} failed.".format(self.resource_config.name),
+            f"Health check on resource {self.resource_config.name} failed.",
         )
         self.api.SetResourceLiveStatus.assert_called_once_with(
             self.resource_config.name, "Error", result
@@ -88,5 +83,5 @@ class TestStateFlow(unittest.TestCase):
         # verify
         self.assertEqual(
             result,
-            "Health check on resource {} passed.".format(self.resource_config.name),
+            f"Health check on resource {self.resource_config.name} passed.",
         )

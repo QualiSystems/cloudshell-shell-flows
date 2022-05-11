@@ -1,12 +1,7 @@
-import sys
 import unittest
+from unittest import mock
 
 from cloudshell.shell.flows.command.basic_flow import RunCommandFlow
-
-if sys.version_info >= (3, 0):
-    from unittest import mock
-else:
-    import mock
 
 
 class TestRunCommandFlow(unittest.TestCase):
