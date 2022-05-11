@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
+from cloudshell.shell.flows.interfaces import (
+    ConfigurationFlowInterface,
+    FirmwareFlowInterface,
+)
 
 
 def test_configuration_flow_interface():
@@ -34,4 +37,18 @@ def test_configuration_flow_interface():
 
     flow = TestedFlow()
     with pytest.raises(NotImplementedError):
-        flow.save(None, None, None, None)
+        flow.save("", "", None)
+    with pytest.raises(NotImplementedError):
+        flow.restore("", "", "", None)
+    with pytest.raises(NotImplementedError):
+        flow.orchestration_save()
+
+
+def test_firmware_flow_interface():
+    class TestedFlow(FirmwareFlowInterface):
+        def load_firmware(self, path: str, vrf_management_name: str | None) -> None:
+            super().load_firmware(path, vrf_management_name)
+
+    flow = TestedFlow()
+    with pytest.raises(NotImplementedError):
+        flow.load_firmware("", None)

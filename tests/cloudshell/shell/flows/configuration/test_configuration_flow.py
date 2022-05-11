@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import time
-from unittest.mock import Mock
 
 import attr
 import pytest
@@ -26,11 +25,6 @@ class ResourceConfig:
     backup_type: str = ""
     backup_user: str = ""
     backup_password: str = ""
-
-
-@pytest.fixture()
-def logger():
-    return Mock()
 
 
 @pytest.fixture()

@@ -39,8 +39,8 @@ class ConfigurationFlowInterface(ABC):
 
 class FirmwareFlowInterface(ABC):
     @abstractmethod
-    def load_firmware(self, path, vrf_management_name):
-        pass
+    def load_firmware(self, path: str, vrf_management_name: str | None) -> None:
+        raise NotImplementedError
 
 
 class RunCommandFlowInterface(ABC):
