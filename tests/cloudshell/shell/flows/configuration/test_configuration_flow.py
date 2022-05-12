@@ -9,7 +9,9 @@ import pytest
 from cloudshell.shell.flows.configuration.basic_flow import (
     AbstractConfigurationFlow,
     ConfigurationType,
+    ConfigurationTypeNotSupported,
     RestoreMethod,
+    RestoreMethodNotSupported,
 )
 from cloudshell.shell.flows.utils.url import (
     ErrorParsingUrl,
@@ -36,6 +38,32 @@ def local_time_str(monkeypatch):
 
     monkeypatch.setattr(time, "localtime", get_local_time)
     return time.strftime("%d%m%y-%H%M%S", l_time)
+
+
+@pytest.fixture()
+def flow_do_nothing(logger):
+    class TestedFlow(AbstractConfigurationFlow):
+        file_system = "file:/"
+
+        def _save_flow(
+            self,
+            file_dst_url,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            pass
+
+        def _restore_flow(
+            self,
+            config_path,
+            configuration_type: ConfigurationType,
+            restore_method: RestoreMethod,
+            vrf_management_name: str | None,
+        ) -> None:
+            pass
+
+    conf = ResourceConfig("res-name")
+    return TestedFlow(logger, conf)
 
 
 def test_file_system_property_not_implemented(logger):
@@ -200,17 +228,9 @@ def test_save_return_another_filename(logger):
     assert file_name == "another-file-name"
 
 
-def test_save_incorrect_folder_path(logger):
-    class TestedConfigurationFlow(AbstractConfigurationFlow):
-        _restore_flow = None
-        _save_flow = None
-        file_system = None
-
-    resource_config = ResourceConfig("res-name")
-    flow = TestedConfigurationFlow(logger, resource_config)
-
+def test_save_incorrect_folder_path(flow_do_nothing):
     with pytest.raises(ErrorParsingUrl):
-        flow.save("flash", "startup")
+        flow_do_nothing.save("flash", "startup")
 
 
 def test_orchestration_save(logger, local_time_str):
@@ -290,17 +310,9 @@ def test_restore_invalid_path(logger):
         flow.restore("file", "running", "append")
 
 
-def test_restore_without_filename(logger):
-    class TestedFLow(AbstractConfigurationFlow):
-        file_system = None
-        _save_flow = None
-        _restore_flow = None
-
-    conf = ResourceConfig("")
-    flow = TestedFLow(logger, conf)
-
+def test_restore_without_filename(flow_do_nothing):
     with pytest.raises(FileNameIsNotPresent):
-        flow.restore("ftp://host", "running", "append")
+        flow_do_nothing.restore("ftp://host", "running", "append")
 
 
 def test_another_local_url(logger, local_time_str):
@@ -332,3 +344,17 @@ def test_another_local_url(logger, local_time_str):
     flow = TestedFlow(logger, conf)
     flow.save("file://folder", "running", "mgmt")
     flow.restore("file://folder/res-name", "running", "append", "mgmt")
+
+
+def test_validation_of_configuration_type(flow_do_nothing):
+    flow_do_nothing.SUPPORTED_CONFIGURATION_TYPES = {ConfigurationType.RUNNING}
+    with pytest.raises(ConfigurationTypeNotSupported):
+        flow_do_nothing.save("", "startup", "mgmgt")
+    with pytest.raises(ConfigurationTypeNotSupported):
+        flow_do_nothing.restore("", "startup", "append", "mgmt")
+
+
+def test_validation_of_restore_method(flow_do_nothing):
+    flow_do_nothing.SUPPORTED_RESTORE_METHODS = {RestoreMethod.OVERRIDE}
+    with pytest.raises(RestoreMethodNotSupported):
+        flow_do_nothing.restore("", "startup", "append", "mgmt")

@@ -12,6 +12,7 @@ import jsonpickle
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
+from cloudshell.shell.flows.utils.errors import ShellFlowsException
 from cloudshell.shell.flows.utils.url import (
     BasicLocalUrl,
     ErrorParsingUrl,
@@ -45,11 +46,31 @@ class RestoreMethod(Enum):
         return cls(name.lower())
 
 
+class ConfigurationTypeNotSupported(ShellFlowsException):
+    def __init__(self, type_: ConfigurationType):
+        self.configuration_type = type_
+        super().__init__(f"Shell doesn't support '{type_.value}' configuration type")
+
+
+class RestoreMethodNotSupported(ShellFlowsException):
+    def __init__(self, method: RestoreMethod):
+        self.restore_method = method
+        super().__init__(f"Shell doesn't support '{method.value}' restore method")
+
+
 class AbstractConfigurationFlow(ConfigurationFlowInterface):
     FILE_SYSTEM_SCHEME = "File System"
     MAX_CONFIG_FILE_NAME_LENGTH = 46  # prefix length is 23 symbols
     REMOTE_URL_CLASS = RemoteURL
     LOCAL_URL_CLASS = BasicLocalUrl
+    SUPPORTED_CONFIGURATION_TYPES: set[ConfigurationType] = {
+        ConfigurationType.RUNNING,
+        ConfigurationType.STARTUP,
+    }
+    SUPPORTED_RESTORE_METHODS: set[RestoreMethod] = {
+        RestoreMethod.OVERRIDE,
+        RestoreMethod.APPEND,
+    }
 
     def __init__(self, logger: Logger, resource_config: GenericBackupConfig):
         self._logger = logger
@@ -80,6 +101,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :return: file name or full path to the file (can include username and password)
         """
         configuration_type = ConfigurationType.from_str(configuration_type)
+        self._validate_configuration_type(configuration_type)
         vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
 
         if folder_path:
@@ -143,12 +165,22 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         :param vrf_management_name: Virtual Routing and Forwarding management name
         """
         configuration_type = ConfigurationType.from_str(configuration_type)
+        self._validate_configuration_type(configuration_type)
         vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
         restore_method = RestoreMethod.from_str(restore_method)
+        self._validate_restore_method(restore_method)
 
         url = self._get_config_url(path)
         self._add_auth(url)
         self._restore_flow(url, configuration_type, restore_method, vrf_management_name)
+
+    def _validate_configuration_type(self, type_: ConfigurationType):
+        if type_ not in self.SUPPORTED_CONFIGURATION_TYPES:
+            raise ConfigurationTypeNotSupported(type_)
+
+    def _validate_restore_method(self, method: RestoreMethod):
+        if method not in self.SUPPORTED_RESTORE_METHODS:
+            raise RestoreMethodNotSupported(method)
 
     @abstractmethod
     def _save_flow(
