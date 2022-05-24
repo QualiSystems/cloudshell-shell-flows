@@ -1,219 +1,360 @@
-import sys
-import unittest
-import warnings
+from __future__ import annotations
 
-from cloudshell.shell.flows.configuration.basic_flow import AbstractConfigurationFlow
+import json
+import time
 
-if sys.version_info >= (3, 0):
-    from unittest import mock
-else:
-    import mock
+import attr
+import pytest
+
+from cloudshell.shell.flows.configuration.basic_flow import (
+    AbstractConfigurationFlow,
+    ConfigurationType,
+    ConfigurationTypeNotSupported,
+    RestoreMethod,
+    RestoreMethodNotSupported,
+)
+from cloudshell.shell.flows.utils.url import (
+    ErrorParsingUrl,
+    FileNameIsNotPresent,
+    LocalFileURL,
+)
 
 
-class TestAbstractConfigurationFlow(unittest.TestCase):
-    def setUp(self):
-        self.logger = mock.MagicMock()
-        self.resource_config = mock.MagicMock()
-        self.cli_handler = mock.MagicMock()
-        self.api = mock.MagicMock()
+@attr.s(auto_attribs=True, slots=True, frozen=True)
+class ResourceConfig:
+    name: str
+    backup_location: str = ""
+    backup_type: str = ""
+    backup_user: str = ""
+    backup_password: str = ""
 
-        class ConfigurationFlow(AbstractConfigurationFlow):
-            _save_flow = mock.MagicMock()
-            _restore_flow = mock.MagicMock()
 
-            @property
-            def _file_system(self):
-                return "flash:"
+@pytest.fixture()
+def local_time_str(monkeypatch):
+    l_time = time.localtime()
 
-        self.config_flow = ConfigurationFlow(
-            logger=self.logger, resource_config=self.resource_config
-        )
+    def get_local_time():
+        return l_time
 
-    def test_abstract_methods(self):
-        """Check that all abstract methods are implemented.
+    monkeypatch.setattr(time, "localtime", get_local_time)
+    return time.strftime("%d%m%y-%H%M%S", l_time)
 
-        Instance can't be instantiated without implementation of all abstract methods
-        """
-        with self.assertRaisesRegexp(
-            TypeError,
-            "Can't instantiate abstract class TestedClass with abstract methods? "
-            "_file_system, _restore_flow, _save_flow",
-        ):
 
-            class TestedClass(AbstractConfigurationFlow):
-                pass
+@pytest.fixture()
+def flow_do_nothing(logger):
+    class TestedFlow(AbstractConfigurationFlow):
+        file_system = "file:/"
 
-            TestedClass(logger=self.logger, resource_config=self.resource_config)
+        def _save_flow(
+            self,
+            file_dst_url,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            pass
 
-    def test_save(self):
-        today_time_str = "100120-142011"
-        folder_path = "ftp://username:password@ftphost.example/configs_dir"
-        config_type = "running"
-        resource_name = "test name"
-        expected_file_name = r"{}-{}-{}".format(
-            resource_name.replace(" ", "_"), config_type, today_time_str
-        )
-        self.resource_config.name = resource_name
-        self.config_flow._validate_configuration_type = mock.MagicMock()
+        def _restore_flow(
+            self,
+            config_path,
+            configuration_type: ConfigurationType,
+            restore_method: RestoreMethod,
+            vrf_management_name: str | None,
+        ) -> None:
+            pass
 
-        # act
-        with mock.patch(
-            "cloudshell.shell.flows.configuration.basic_flow.time",
-            mock.MagicMock(strftime=mock.MagicMock(return_value=today_time_str)),
-        ) as time_mock:
-            file_name = self.config_flow.save(
-                folder_path=folder_path,
-                configuration_type=config_type,
-                vrf_management_name=None,
+    conf = ResourceConfig("res-name")
+    return TestedFlow(logger, conf)
+
+
+def test_file_system_property_not_implemented(logger):
+    class TestedFlow(AbstractConfigurationFlow):
+        def _save_flow(
+            self,
+            file_dst_url,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            return super()._save_flow(
+                file_dst_url, configuration_type, vrf_management_name
             )
 
-            # verify
-            time_mock.strftime.assert_called_once_with(
-                "%d%m%y-%H%M%S", time_mock.localtime()
-            )
-            self.assertEqual(expected_file_name, file_name)
-            self.config_flow._save_flow.assert_called_once_with(
-                folder_path="{}/{}".format(folder_path, expected_file_name),
-                configuration_type=config_type,
-                vrf_management_name=self.resource_config.vrf_management_name,
-            )
-            self.config_flow._validate_configuration_type.assert_called_once_with(
-                config_type
+        def _restore_flow(
+            self,
+            config_path,
+            configuration_type: ConfigurationType,
+            restore_method,
+            vrf_management_name: str | None,
+        ) -> None:
+            return super()._restore_flow(
+                config_path, configuration_type, restore_method, vrf_management_name
             )
 
-    def test_restore(self):
-        expected_path = "expected full path"
-        path = "test path"
-        config_type = "running"
-        restore_method = "override"
-        self.resource_config.name = "test name"
-        self.config_flow._get_path = mock.MagicMock(return_value=expected_path)
-        self.config_flow._validate_configuration_type = mock.MagicMock()
-        # act
-        self.config_flow.restore(
-            path=path,
-            configuration_type=config_type,
-            restore_method=restore_method,
-            vrf_management_name=None,
-        )
-        # verify
-        self.config_flow._restore_flow.assert_called_once_with(
-            path=expected_path,
-            configuration_type=config_type,
-            restore_method=restore_method,
-            vrf_management_name=self.resource_config.vrf_management_name,
-        )
-        self.config_flow._validate_configuration_type.assert_called_once_with(
-            config_type
-        )
+        @property
+        def file_system(self) -> str:
+            return super().file_system
 
-    def test_orchestration_save(self):
-        today_time_str = "100120-142011"
-        resource_name = "resource name"
-        config_type = "running"
-        expected_file_name = r"{}-{}-{}".format(
-            resource_name.replace(" ", "_"), config_type, today_time_str
-        )
-        expected_path = "{}{}".format(
-            self.config_flow._file_system.rstrip("/"), expected_file_name
-        )
-        self.resource_config.backup_type = self.config_flow.DEFAULT_BACKUP_SCHEME
-        self.resource_config.backup_location = ""
-        self.resource_config.name = resource_name
+    conf = ResourceConfig("res-name")
+    flow = TestedFlow(logger, conf)
 
-        # act
-        with mock.patch(
-            "cloudshell.shell.flows.configuration.basic_flow.time",
-            mock.MagicMock(strftime=mock.MagicMock(return_value=today_time_str)),
-        ) as time_mock:
-            full_path = self.config_flow.orchestration_save()
+    with pytest.raises(NotImplementedError):
+        _ = flow.file_system
+    with pytest.raises(NotImplementedError):
+        flow._save_flow(None, None, None)
+    with pytest.raises(NotImplementedError):
+        flow._restore_flow(None, None, None, None)
 
-        # verify
-        self.assertEqual(expected_path, full_path)
-        time_mock.strftime.assert_called_once_with(
-            "%d%m%y-%H%M%S", time_mock.localtime()
-        )
 
-    def test_validate_configuration_type(self):
-        config_type = "Running"
-        # act # verify
-        self.config_flow._validate_configuration_type(configuration_type=config_type)
+@pytest.mark.parametrize(
+    ("folder_path", "resource_config", "file_system", "expected_file_prefix"),
+    (
+        (
+            "ftp://user:password@192.168.2.3",
+            ResourceConfig("res name"),
+            None,
+            "ftp://user:password@192.168.2.3/res_name",
+        ),
+        (
+            "ftp://192.168.2.3",
+            ResourceConfig("res name"),
+            None,
+            "ftp://192.168.2.3/res_name",
+        ),
+        (
+            "ftp://192.168.2.3",
+            ResourceConfig("res name", backup_user="ftp_user"),
+            None,
+            "ftp://ftp_user@192.168.2.3/res_name",
+        ),
+        (
+            "ftp://192.168.2.3",
+            ResourceConfig("res name", backup_user="ftp_user", backup_password="pw"),
+            None,
+            "ftp://ftp_user:pw@192.168.2.3/res_name",
+        ),
+        (
+            "",
+            ResourceConfig(
+                "res name",
+                backup_location="ftp://192.168.4.5",
+                backup_user="ftp_user",
+                backup_password="pw",
+            ),
+            None,
+            "ftp://ftp_user:pw@192.168.4.5/res_name",
+        ),
+        (
+            "",
+            ResourceConfig(
+                "res name",
+                backup_location="192.168.4.5",
+                backup_type="ftp",
+                backup_user="ftp_user",
+                backup_password="pw",
+            ),
+            None,
+            "ftp://ftp_user:pw@192.168.4.5/res_name",
+        ),
+        (
+            "",
+            ResourceConfig(
+                "res name",
+                backup_type=AbstractConfigurationFlow.FILE_SYSTEM_SCHEME,
+            ),
+            "flash:/",
+            "flash://res_name",
+        ),
+        (
+            "",
+            ResourceConfig(
+                "res name",
+                backup_type=AbstractConfigurationFlow.FILE_SYSTEM_SCHEME,
+            ),
+            "disc0:",
+            "disc0:/res_name",
+        ),
+        (
+            "flash:/folder_path",
+            ResourceConfig("res name"),
+            "",
+            "flash:/folder_path/res_name",
+        ),
+    ),
+)
+def test_save_method_get_correct_file_path(
+    folder_path,
+    resource_config,
+    file_system,
+    expected_file_prefix,
+    logger,
+    local_time_str,
+):
+    config_type = "running"
+    expected_file_path = f"{expected_file_prefix}-{config_type}-{local_time_str}"
 
-    def test_validate_configuration_type__invalid_config_type(self):
-        config_type = "invalid"
-        if sys.version_info >= (3, 0):
-            assert_regex = self.assertRaisesRegex
-        else:
-            assert_regex = self.assertRaisesRegexp
+    class TestedConfigurationFlow(AbstractConfigurationFlow):
+        _restore_flow = None
 
-        # act # verify
-        with assert_regex(
-            Exception, "Configuration Type is invalid. Should be startup or running"
-        ):
-            self.config_flow._validate_configuration_type(
-                configuration_type=config_type
-            )
+        @property
+        def file_system(self) -> str:
+            return file_system
 
-    @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
-    def test_get_path(self, url_parser_class):
-        """Check that method will return UrlParser.build_url() result."""
-        path = "some path"
-        url = {url_parser_class.SCHEME: "ftp"}
-        url_parser_class.parse_url.return_value = url
-        builded_url = mock.MagicMock()
-        url_parser_class.build_url.return_value = builded_url
-        # act
-        result = self.config_flow._get_path(path=path)
-        # verify
-        self.assertEqual(result, builded_url)
-        url_parser_class.parse_url.assert_called_once_with(path)
+        def _save_flow(self, file_dst_url, configuration_type, vrf_management_name):
+            assert str(file_dst_url) == expected_file_path
+            assert configuration_type == ConfigurationType.from_str(config_type)
 
-    @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
-    def test_get_path_with_empty_path(self, url_parser_class):
-        """Check that method will use backup location and backup type."""
-        self.resource_config.backup_location = "backup_location"
-        self.resource_config.backup_type = "backup_type"
-        url = mock.MagicMock()
-        url_parser_class.build_url.return_value = url
-        # act
-        self.config_flow._get_path()
-        # verify
-        url_parser_class.parse_url.assert_called_once_with(
-            "backup_type://backup_location"
-        )
+    flow = TestedConfigurationFlow(logger, resource_config)
 
-    @mock.patch("cloudshell.shell.flows.configuration.basic_flow.UrlParser")
-    def test_get_path_failed_to_build_url(self, url_parser_class):
-        """Check that method will raise Exception if it unable to build the URL."""
-        url_parser_class.build_url.side_effect = Exception
-        # act
-        with self.assertRaisesRegexp(
-            Exception, "Failed to build path url to remote host"
-        ):
-            self.config_flow._get_path(path="some path")
+    file_name = flow.save(folder_path, config_type)
+    assert file_name == expected_file_path.rsplit("/")[-1]
 
-    def test_get_path_for_default_file_system(self):
-        self.resource_config.backup_location = "resource_startup.cfg"
-        self.resource_config.backup_type = self.config_flow._file_system
-        expected_path = "{}//{}".format(
-            self.config_flow._file_system, self.resource_config.backup_location
-        )
-        # act
-        path = self.config_flow._get_path()
-        # verify
-        self.assertEqual(expected_path, path)
 
-    def test_orchestration_restore_show_warning(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+def test_save_return_another_filename(logger):
+    class TestedConfigurationFlow(AbstractConfigurationFlow):
+        _restore_flow = None
+        file_system = None
 
-            # act
-            self.config_flow.orchestration_restore(mock.MagicMock())
+        def _save_flow(
+            self,
+            file_dst_url,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            return "another-file-name"
 
-            # verify
-            self.assertEqual(1, len(w))
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertEqual(
-                "orchestration_restore is deprecated. Use 'restore' instead",
-                str(w[0].message),
-            )
+    resource_config = ResourceConfig("res-name")
+    flow = TestedConfigurationFlow(logger, resource_config)
+    file_name = flow.save("ftp://folder-path", "running")
+
+    assert file_name == "another-file-name"
+
+
+def test_save_incorrect_folder_path(flow_do_nothing):
+    with pytest.raises(ErrorParsingUrl):
+        flow_do_nothing.save("flash", "startup")
+
+
+def test_orchestration_save(logger, local_time_str):
+    class TestedFlow(AbstractConfigurationFlow):
+        file_system = "flash:/"
+        _restore_flow = None
+
+        def _save_flow(
+            self,
+            file_dst_url,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            return None
+
+    conf = ResourceConfig("res-name")
+    flow = TestedFlow(logger, conf)
+    custom_params = json.dumps({"custom_params": {"configuration_type": "startup"}})
+    file_path = flow.orchestration_save(custom_params=custom_params)
+    file_suffix = f"-startup-{local_time_str}"
+
+    assert file_path == f"{TestedFlow.file_system}/{conf.name}{file_suffix}"
+
+
+@pytest.mark.parametrize(
+    ("passed_config_path", "resource_config", "expected_config_path"),
+    (
+        (
+            "ftp://user:pass@host/file-name",
+            ResourceConfig(""),
+            "ftp://user:pass@host/file-name",
+        ),
+        ("tftp://host/file-name", ResourceConfig(""), "tftp://host/file-name"),
+        (
+            "sftp://host/folder/file",
+            ResourceConfig("", backup_user="user", backup_password="pass"),
+            "sftp://user:pass@host/folder/file",
+        ),
+        (
+            "file_name",
+            ResourceConfig("", backup_user="user", backup_password="pass"),
+            "disk0:/file_name",
+        ),
+    ),
+)
+def test_restore(logger, passed_config_path, resource_config, expected_config_path):
+    class TestedFlow(AbstractConfigurationFlow):
+        file_system = "disk0:"
+        _save_flow = None
+
+        def _restore_flow(
+            self,
+            config_path,
+            configuration_type: ConfigurationType,
+            restore_method: RestoreMethod,
+            vrf_management_name: str | None,
+        ) -> None:
+            assert str(config_path) == expected_config_path
+            assert configuration_type == ConfigurationType.STARTUP
+            assert restore_method == RestoreMethod.OVERRIDE
+            assert vrf_management_name == "mgmt-vrf"
+
+    flow = TestedFlow(logger, resource_config)
+    flow.restore(passed_config_path, "startup", "override", "mgmt-vrf")
+
+
+def test_restore_invalid_path(logger):
+    class TestedFlow(AbstractConfigurationFlow):
+        file_system = None
+        _save_flow = None
+        _restore_flow = None
+
+    conf = ResourceConfig("")
+    flow = TestedFlow(logger, conf)
+
+    with pytest.raises(ErrorParsingUrl):
+        flow.restore("file", "running", "append")
+
+
+def test_restore_without_filename(flow_do_nothing):
+    with pytest.raises(FileNameIsNotPresent):
+        flow_do_nothing.restore("ftp://host", "running", "append")
+
+
+def test_another_local_url(logger, local_time_str):
+    file_suffix = f"-running-{local_time_str}"
+    conf = ResourceConfig("res-name")
+
+    class TestedFlow(AbstractConfigurationFlow):
+        LOCAL_URL_CLASS = LocalFileURL
+        file_system = "file:/"
+
+        def _save_flow(
+            self,
+            file_dst_url: LOCAL_URL_CLASS,
+            configuration_type: ConfigurationType,
+            vrf_management_name: str | None,
+        ) -> str | None:
+            assert file_dst_url == LocalFileURL(path=f"/folder/res-name{file_suffix}")
+            return None
+
+        def _restore_flow(
+            self,
+            config_path: LOCAL_URL_CLASS,
+            configuration_type: ConfigurationType,
+            restore_method: RestoreMethod,
+            vrf_management_name: str | None,
+        ) -> None:
+            assert config_path == LocalFileURL(path="/folder/res-name")
+
+    flow = TestedFlow(logger, conf)
+    flow.save("file://folder", "running", "mgmt")
+    flow.restore("file://folder/res-name", "running", "append", "mgmt")
+
+
+def test_validation_of_configuration_type(flow_do_nothing):
+    flow_do_nothing.SUPPORTED_CONFIGURATION_TYPES = {ConfigurationType.RUNNING}
+    with pytest.raises(ConfigurationTypeNotSupported):
+        flow_do_nothing.save("", "startup", "mgmgt")
+    with pytest.raises(ConfigurationTypeNotSupported):
+        flow_do_nothing.restore("", "startup", "append", "mgmt")
+
+
+def test_validation_of_restore_method(flow_do_nothing):
+    flow_do_nothing.SUPPORTED_RESTORE_METHODS = {RestoreMethod.OVERRIDE}
+    with pytest.raises(RestoreMethodNotSupported):
+        flow_do_nothing.restore("", "startup", "append", "mgmt")

@@ -1,12 +1,7 @@
-import sys
 import unittest
+from unittest.mock import MagicMock
 
 from cloudshell.shell.flows.autoload.basic_flow import AbstractAutoloadFlow
-
-if sys.version_info >= (3, 0):
-    from unittest.mock import MagicMock
-else:
-    from mock import MagicMock
 
 
 class TestAbstractAutoloadFlow(unittest.TestCase):

@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.command.basic_flow import RunCommandFlow
@@ -18,7 +16,7 @@ class StateFlow(StateFlowInterface):
         """Verify that device is accessible over CLI by sending ENTER for cli."""
         api_response = "Online"
 
-        result = "Health check on resource {}".format(self.resource_config.name)
+        result = f"Health check on resource {self.resource_config.name}"
         try:
             RunCommandFlow(self._logger, self._cli_configurator).run_custom_command("")
             result += " passed."
