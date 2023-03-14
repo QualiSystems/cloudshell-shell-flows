@@ -13,6 +13,7 @@ from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
 from cloudshell.shell.flows.utils.errors import ShellFlowsException
+from cloudshell.shell.flows.utils.resource_conf import get_str_backup_type
 from cloudshell.shell.flows.utils.url import (
     BasicLocalUrl,
     ErrorParsingUrl,
@@ -240,7 +241,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
             url = self.REMOTE_URL_CLASS.from_str(backup_location)
         except ValidationError:
             # or without scheme 🤷
-            scheme = self._resource_config.backup_type
+            scheme = get_str_backup_type(self._resource_config)
             if not scheme or scheme.lower() == self.FILE_SYSTEM_SCHEME.lower():
                 scheme = self.file_system
                 url = self.LOCAL_URL_CLASS.from_str(backup_location, scheme)
