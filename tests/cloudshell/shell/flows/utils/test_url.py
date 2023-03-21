@@ -172,16 +172,41 @@ def test_validation_path_starts_from_root():
 @pytest.mark.parametrize(
     ("url_str", "expected_url"),
     (
-        ("flash:/path", BasicLocalUrl(scheme="flash:", path="/path")),
+        ("flash:/path", BasicLocalUrl(scheme="flash", delimiter=":/", path="/path")),
         (
             "flash:/path/folder/folder/file",
-            BasicLocalUrl(scheme="flash:", path="/path/folder/folder/file"),
+            BasicLocalUrl(scheme="flash", delimiter=":/",
+                          path="/path/folder/folder/file"),
         ),
-        ("flash://path", BasicLocalUrl(scheme="flash:/", path="/path")),
+        ("flash://path", BasicLocalUrl(scheme="flash", delimiter="://", path="/path")),
         (
             "flash://path/folder/folder/file",
-            BasicLocalUrl(scheme="flash:/", path="/path/folder/folder/file"),
+            BasicLocalUrl(scheme="flash", delimiter="://", path="/path/folder/folder/file"),
         ),
+        (
+                "flash:/",
+                BasicLocalUrl(scheme="flash", delimiter=":/", path="/"),
+        ),
+        (
+                "bootflash:/",
+                BasicLocalUrl(scheme="bootflash", delimiter=":/", path="/"),
+        ),
+        (
+                "bootflash:nxos_firmware.bin",
+                BasicLocalUrl(scheme="bootflash", delimiter=":", path="/nxos_firmware.bin"),
+        ),
+        (
+                "disk0:/",
+                BasicLocalUrl(scheme="disk0", delimiter=":/", path="/"),
+        ),
+        (
+                "system:/",
+                BasicLocalUrl(scheme="system", delimiter=":/", path="/"),
+        ),
+        (
+                "/var/tmp",
+                BasicLocalUrl(scheme="", delimiter="/", path="/var/tmp"),
+        )
     ),
 )
 def test_basic_local_url(url_str, expected_url):

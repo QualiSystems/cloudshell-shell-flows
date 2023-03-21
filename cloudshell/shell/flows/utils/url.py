@@ -83,7 +83,9 @@ def _validate_path_starts_from_root(self, attribute, value: str) -> str:
 
 
 def _convert_path_to_start_from_root(path: str) -> str:
-    if not path.startswith("/"):
+    if not path:
+        path = "/"
+    elif not path.startswith("/"):
         path = f"/{path}"
     return path
 
@@ -246,30 +248,37 @@ class BasicLocalUrl(AbstractUrlWithPosixPath):
 
     Scheme is first substring before "/"
     Path is the Posix Path
-    flash:/path - scheme = flash: | path = path
-    disk0:/path - scheme = disk0: | path = path
-    flash://path - scheme = flash"" | path = path:/ | path = path
-    /path - scheme =
+    flash:/path - scheme = flash: | path = /path
+    disk0:/path - scheme = disk0: | path = /path
+    disk0:/     - scheme = disk0: | path = /
+    bootflash:nxos-file - scheme = bootflash: | path = /nxos-file
+    flash://path - scheme = flash:/ | path = /path
+    /path - scheme = "" | path = /path
     """
 
-    PATTERN = re.compile(r"^(.+?)/([^/].+)$")
+    PATTERN = re.compile(r"^([^/]+?)?(:/*|/+)([^/].+)?$")
     scheme: str
+    delimiter: str
 
     @classmethod
     def from_str(cls, url_str: str, scheme: str | None = None) -> BasicLocalUrl:
         if not scheme:
             try:
-                scheme, path = cls.PATTERN.search(url_str).groups()
+                scheme, delimiter, path = cls.PATTERN.search(url_str).groups()
             except (ValueError, AttributeError):
                 raise ValidationError
         else:
             path = url_str
+            scheme, delimiter, _ = cls.PATTERN.search(scheme).groups()
 
-        return cls(scheme=scheme, path=path)
+        if not scheme:
+            scheme = ""
+
+        return cls(scheme=scheme, delimiter=delimiter, path=path)
 
     @property
     def url(self) -> str:
-        return f"{self.scheme}{self.path}"
+        return f"{self.scheme}{self.delimiter}{self.path[1:]}"
 
     @property
     def safe_url(self) -> str:
