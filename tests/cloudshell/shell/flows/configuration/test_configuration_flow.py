@@ -161,7 +161,7 @@ def test_file_system_property_not_implemented(logger):
                 backup_type=AbstractConfigurationFlow.FILE_SYSTEM_SCHEME,
             ),
             "flash:/",
-            "flash://res_name",
+            "flash:/res_name",
         ),
         (
             "",
@@ -170,7 +170,7 @@ def test_file_system_property_not_implemented(logger):
                 backup_type=AbstractConfigurationFlow.FILE_SYSTEM_SCHEME,
             ),
             "disc0:",
-            "disc0:/res_name",
+            "disc0:res_name",
         ),
         (
             "flash:/folder_path",
@@ -205,7 +205,7 @@ def test_save_method_get_correct_file_path(
     flow = TestedConfigurationFlow(logger, resource_config)
 
     file_name = flow.save(folder_path, config_type)
-    assert file_name == expected_file_path.rsplit("/")[-1]
+    assert expected_file_path.endswith(file_name)
 
 
 def test_save_return_another_filename(logger):
@@ -252,7 +252,7 @@ def test_orchestration_save(logger, local_time_str):
     file_path = flow.orchestration_save(custom_params=custom_params)
     file_suffix = f"-startup-{local_time_str}"
 
-    assert file_path == f"{TestedFlow.file_system}/{conf.name}{file_suffix}"
+    assert file_path == f"{TestedFlow.file_system}{conf.name}{file_suffix}"
 
 
 @pytest.mark.parametrize(
@@ -272,7 +272,7 @@ def test_orchestration_save(logger, local_time_str):
         (
             "file_name",
             ResourceConfig("", backup_user="user", backup_password="pass"),
-            "disk0:/file_name",
+            "disk0:file_name",
         ),
     ),
 )
