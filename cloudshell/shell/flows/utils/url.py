@@ -189,6 +189,7 @@ class RemoteURL(AbstractUrlWithPosixPath):
 
     @classmethod
     def from_str(cls, url_str: str, scheme: str | None = None) -> RemoteURL:
+        assert re.match(r"['\"\s].+?['\"\s]", url_str) is None
         if scheme:
             url_str = f"{scheme}://{url_str}"
         args = None
@@ -262,6 +263,7 @@ class BasicLocalUrl(AbstractUrlWithPosixPath):
 
     @classmethod
     def from_str(cls, url_str: str, scheme: str | None = None) -> BasicLocalUrl:
+        assert re.match(r"['\"\s].+?['\"\s]", url_str) is None
         if not scheme:
             try:
                 scheme, delimiter, path = cls.PATTERN.search(url_str).groups()
@@ -303,6 +305,7 @@ class LocalFileURL(AbstractUrlWithPosixPath):
 
     @classmethod
     def from_str(cls, url_str: str, scheme: str | None = None) -> LocalFileURL:
+        assert re.match(r"['\"\s].+?['\"\s]", url_str) is None
         if scheme:
             assert scheme == cls.SCHEME
             path = url_str
