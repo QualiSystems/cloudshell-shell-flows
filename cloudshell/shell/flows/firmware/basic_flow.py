@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import FirmwareFlowInterface
+from cloudshell.shell.flows.utils.str_helpers import normalize_path
 from cloudshell.shell.flows.utils.url import (
     BasicLocalUrl,
     ErrorParsingUrl,
@@ -53,6 +54,7 @@ class AbstractFirmwareFlow(FirmwareFlowInterface):
         :param vrf_management_name: VRF Name
         :return: status / exception
         """
+        path = normalize_path(path)
         url = self._get_firmware_url(path)
         vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
         self._load_firmware_flow(url, vrf_management_name, self._timeout)

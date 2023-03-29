@@ -14,6 +14,7 @@ from cloudshell.logging.utils.decorators import command_logging
 from cloudshell.shell.flows.interfaces import ConfigurationFlowInterface
 from cloudshell.shell.flows.utils.errors import ShellFlowsException
 from cloudshell.shell.flows.utils.resource_conf import get_str_backup_type
+from cloudshell.shell.flows.utils.str_helpers import normalize_path
 from cloudshell.shell.flows.utils.url import (
     BasicLocalUrl,
     ErrorParsingUrl,
@@ -106,6 +107,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
 
         if folder_path:
+            folder_path = normalize_path(folder_path)
             url = self._get_folder_url(folder_path)
         else:
             url = self._generate_folder_url_from_resource_config()
@@ -170,6 +172,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         vrf_management_name = self._get_vrf_mgmt_name(vrf_management_name)
         restore_method = RestoreMethod.from_str(restore_method)
         self._validate_restore_method(restore_method)
+        path = normalize_path(path)
 
         url = self._get_config_url(path)
         self._add_auth(url)
@@ -236,6 +239,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         self,
     ) -> REMOTE_URL_CLASS | LOCAL_URL_CLASS:
         backup_location = self._resource_config.backup_location
+        backup_location = normalize_path(backup_location)
         try:
             # backup location can contain full URL with the scheme
             url = self.REMOTE_URL_CLASS.from_str(backup_location)
