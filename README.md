@@ -1,5 +1,5 @@
 # cloudshell-shell-flows
-[![Build status](https://travis-ci.org/QualiSystems/cloudshell-shell-flows.svg?branch=master)](https://travis-ci.org/QualiSystems/cloudshell-shell-flows)
+[![Build status](https://github.com/QualiSystems/cloudshell-shell-flows/workflows/CI/badge.svg?branch=master)](https://github.com/QualiSystems/cloudshell-shell-flows/actions?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/QualiSystems/cloudshell-shell-flows/branch/master/graph/badge.svg)](https://codecov.io/gh/QualiSystems/cloudshell-shell-flows)
 [![PyPI version](https://badge.fury.io/py/cloudshell-shell-flows.svg)](https://badge.fury.io/py/cloudshell-shell-flows)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
