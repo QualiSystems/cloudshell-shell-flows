@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import json
 import re
 import time
 from abc import abstractmethod
 from enum import Enum
 from logging import Logger
 from typing import TYPE_CHECKING
-
-import jsonpickle
 
 from cloudshell.logging.utils.decorators import command_logging
 
@@ -142,7 +141,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         }
         params = {}
         if custom_params:
-            params = jsonpickle.decode(custom_params)
+            params = json.loads(custom_params)
 
         save_params.update(params.get("custom_params", {}))
         path = self.save(**save_params)
