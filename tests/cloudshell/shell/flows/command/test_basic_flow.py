@@ -6,7 +6,6 @@ from cloudshell.shell.flows.command.basic_flow import RunCommandFlow
 
 class TestRunCommandFlow(unittest.TestCase):
     def setUp(self):
-        self.logger = mock.MagicMock()
         self.cli_configurator = mock.MagicMock()
         self.enable_session = mock.MagicMock()
         self.config_session = mock.MagicMock()
@@ -22,9 +21,7 @@ class TestRunCommandFlow(unittest.TestCase):
                 )
             ),
         )
-        self.run_flow = RunCommandFlow(
-            logger=self.logger, cli_configurator=self.cli_configurator
-        )
+        self.run_flow = RunCommandFlow(self.cli_configurator)
 
     def test_run_custom_command(self):
         custom_command = "test custom command"
