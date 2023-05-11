@@ -1,3 +1,4 @@
+cloudshell-shell-core~=6.0
 cloudshell-logging~=2.0
 cloudshell-shell-standards~=2.0
 typing_extensions

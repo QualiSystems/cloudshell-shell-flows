@@ -1,11 +1,22 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+from cloudshell.shell.core.driver_context import AutoLoadDetails
+
+if TYPE_CHECKING:
+    from cloudshell.shell.standards.autoload_generic_models import GenericResourceModel
 
 
 class AutoloadFlowInterface(ABC):
     @abstractmethod
-    def discover(self, supported_os, resource_model):
+    def discover(
+        self,
+        supported_os: re.Pattern | str | list[str],
+        resource_model: GenericResourceModel,
+    ) -> AutoLoadDetails:
         pass
 
 
@@ -45,11 +56,11 @@ class FirmwareFlowInterface(ABC):
 
 class RunCommandFlowInterface(ABC):
     @abstractmethod
-    def run_custom_command(self, command):
+    def run_custom_command(self, command: str) -> str:
         pass
 
     @abstractmethod
-    def run_custom_config_command(self, command):
+    def run_custom_config_command(self, command: str) -> str:
         pass
 
 

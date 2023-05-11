@@ -23,9 +23,5 @@ repos:
           flake8-comprehensions,
           flake8-print,
           flake8-eradicate,
-          flake8-requirements-absolute-imports,
-        ]
-        args: [
-          --project-base-module=cloudshell.shell.flows,
-          "--known-modules=cloudshell-logging:[cloudshell.logging],cloudshell-shell-standards:[cloudshell.shell.standards]"
+          flake8-requirements,
         ]

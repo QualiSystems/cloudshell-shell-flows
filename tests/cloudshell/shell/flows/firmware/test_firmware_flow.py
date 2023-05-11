@@ -18,7 +18,7 @@ def resource_config():
 
 
 @pytest.fixture()
-def firmware_flow_do_nothing(logger, resource_config):
+def firmware_flow_do_nothing(resource_config):
     class TestedFlow(AbstractFirmwareFlow):
         def _load_firmware_flow(
             self,
@@ -28,10 +28,10 @@ def firmware_flow_do_nothing(logger, resource_config):
         ) -> None:
             return
 
-    return TestedFlow(logger, resource_config)
+    return TestedFlow(resource_config)
 
 
-def test_abstract_flow(logger, resource_config):
+def test_abstract_flow(resource_config):
     class TestedFlow(AbstractFirmwareFlow):
         def _load_firmware_flow(
             self,
@@ -41,7 +41,7 @@ def test_abstract_flow(logger, resource_config):
         ) -> None:
             super()._load_firmware_flow(firmware_url, vrf_management_name, timeout)
 
-    flow = TestedFlow(logger, resource_config)
+    flow = TestedFlow(resource_config)
     with pytest.raises(NotImplementedError):
         flow._load_firmware_flow("", None, 100)
 
@@ -54,9 +54,7 @@ def test_abstract_flow(logger, resource_config):
         ("flash://file", None, "flash://file", "vrf name"),
     ),
 )
-def test_load_firmware(
-    path, vrf, expected_url_str, expected_vrf, logger, resource_config
-):
+def test_load_firmware(path, vrf, expected_url_str, expected_vrf, resource_config):
     class TestedFlow(AbstractFirmwareFlow):
         def _load_firmware_flow(
             self,
@@ -67,7 +65,7 @@ def test_load_firmware(
             assert str(firmware_url) == expected_url_str
             assert vrf_management_name == expected_vrf
 
-    flow = TestedFlow(logger, resource_config)
+    flow = TestedFlow(resource_config)
     flow.load_firmware(path, vrf)
 
 

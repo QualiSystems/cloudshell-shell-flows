@@ -1,25 +1,20 @@
+from __future__ import annotations
+
 from cloudshell.logging.utils.decorators import command_logging
 
 from cloudshell.shell.flows.interfaces import RunCommandFlowInterface
+from cloudshell.shell.flows.utils.protocols import CliConfiguratorProtocol
 
 
 class RunCommandFlow(RunCommandFlowInterface):
-    def __init__(self, logger, cli_configurator):
-        """Create RunCommandOperations.
-
-        :param logger: QsLogger object
-        :param cloudshell.cli.configurator.AbstractModeConfigurator cli_configurator:
-        """
-        self._logger = logger
+    def __init__(self, cli_configurator: CliConfiguratorProtocol):
         self._cli_configurator = cli_configurator
 
-    def _run_command_flow(self, custom_command, is_config=False):
+    def _run_command_flow(self, custom_command: str, is_config: bool = False) -> str:
         """Execute flow which run custom command on device.
 
         :param custom_command: the command to execute on device
-        :type custom_command: str
         :param is_config: if True then run command in configuration mode
-        :return: command execution output
         """
         commands = self.parse_custom_commands(custom_command)
 
@@ -35,34 +30,20 @@ class RunCommandFlow(RunCommandFlowInterface):
         return "\n".join(responses)
 
     @command_logging
-    def run_custom_command(self, custom_command):
-        """Execute custom command on device.
-
-        :param custom_command: command
-        :type custom_command: str
-
-        :return: result of command execution
-        """
+    def run_custom_command(self, custom_command: str) -> str:
+        """Execute custom command on device."""
         return self._run_command_flow(custom_command=custom_command)
 
     @command_logging
-    def run_custom_config_command(self, custom_command):
-        """Execute custom command in configuration mode on device.
-
-        :param custom_command: command
-        :type custom_command: str
-
-        :return: result of command execution
-        """
+    def run_custom_config_command(self, custom_command: str) -> str:
+        """Execute custom command in configuration mode on device."""
         return self._run_command_flow(custom_command=custom_command, is_config=True)
 
-    def parse_custom_commands(self, command, separator=";"):
+    @staticmethod
+    def parse_custom_commands(command: str, separator: str = ";") -> list[str]:
         """Parse run custom command string into the commands list.
 
         :param str command: run custom [config] command(s)
         :param str separator: commands separator in the string
-        :rtype: list[str]
         """
-        if isinstance(command, str):
-            return command.strip(separator).split(separator)
-        return command
+        return command.strip(separator).split(separator)

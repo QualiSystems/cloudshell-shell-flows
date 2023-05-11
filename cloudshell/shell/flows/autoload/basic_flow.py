@@ -1,29 +1,29 @@
+from __future__ import annotations
+
+import logging
+import re
 from abc import abstractmethod
 
 from cloudshell.logging.utils.decorators import command_logging
+from cloudshell.shell.core.driver_context import AutoLoadDetails
+from cloudshell.shell.standards.autoload_generic_models import GenericResourceModel
 
 from cloudshell.shell.flows.interfaces import AutoloadFlowInterface
 
+logger = logging.getLogger(__name__)
+
 
 class AbstractAutoloadFlow(AutoloadFlowInterface):
-    def __init__(self, logger):
-        """Autoload Flow.
-
-        :param logging.Logger logger:
-        """
-        self._logger = logger
-
     @abstractmethod
-    def _autoload_flow(self, supported_os, resource_model):
-        """Build autoload details, has to be implemented.
-
-        :param collections.Iterable supported_os:
-        :param cloudshell.shell.standards.autoload_generic_models.GenericResourceModel resource_model:  # noqa: E501
-        :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
-        """
+    def _autoload_flow(
+        self,
+        supported_os: re.Pattern | str | list[str],
+        resource_model: GenericResourceModel,
+    ) -> AutoLoadDetails:
         pass
 
-    def _log_device_details(self, details):
+    @staticmethod
+    def _log_device_details(details: AutoLoadDetails) -> None:
         needed_attrs = {"Vendor", "Model", "OS Version"}
         attrs = {}
 
@@ -37,22 +37,18 @@ class AbstractAutoloadFlow(AutoloadFlowInterface):
                 if not needed_attrs:
                     break
 
-        self._logger.info(
-            'Device Vendor: "{}", Model: "{}", OS Version: "{}"'.format(
-                attrs.get("Vendor", ""),
-                attrs.get("Model", ""),
-                attrs.get("OS Version", ""),
-            )
+        logger.info(
+            f'Device Vendor: "{attrs.get("Vendor", "")}", '
+            f'Model: "{attrs.get("Model", "")}", '
+            f'OS Version: "{attrs.get("OS Version", "")}"'
         )
 
     @command_logging
-    def discover(self, supported_os, resource_model):
-        """Discover the resource.
-
-        :param collections.Iterable supported_os:
-        :param cloudshell.shell_standards.autoload_generic_models.GenericResourceModel resource_model:  # noqa: E501
-        :return:
-        """
+    def discover(
+        self,
+        supported_os: re.Pattern | str | list[str],
+        resource_model: GenericResourceModel,
+    ) -> AutoLoadDetails:
         details = self._autoload_flow(supported_os, resource_model)
 
         self._log_device_details(details)
