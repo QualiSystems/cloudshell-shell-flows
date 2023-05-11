@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from logging import Logger
-from typing import TYPE_CHECKING
 
 from cloudshell.logging.utils.decorators import command_logging
 
@@ -15,18 +13,12 @@ from cloudshell.shell.flows.utils.url import (
     ValidationError,
 )
 
-if TYPE_CHECKING:
-    from cloudshell.shell.standards.core.resource_config_entities import (
-        GenericResourceConfig,
-    )
-
 
 class AbstractFirmwareFlow(FirmwareFlowInterface):
     REMOTE_URL_CLASS = RemoteURL
     LOCAL_URL_CLASS = BasicLocalUrl
 
-    def __init__(self, logger: Logger, resource_config: GenericResourceConfig):
-        self._logger = logger
+    def __init__(self, resource_config):
         self._timeout = 3600
         self._resource_config = resource_config
 

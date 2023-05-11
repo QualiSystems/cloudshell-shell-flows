@@ -5,7 +5,6 @@ import re
 import time
 from abc import abstractmethod
 from enum import Enum
-from logging import Logger
 from typing import TYPE_CHECKING
 
 from cloudshell.logging.utils.decorators import command_logging
@@ -73,8 +72,7 @@ class AbstractConfigurationFlow(ConfigurationFlowInterface):
         RestoreMethod.APPEND,
     }
 
-    def __init__(self, logger: Logger, resource_config: GenericBackupConfig):
-        self._logger = logger
+    def __init__(self, resource_config: GenericBackupConfig):
         self._resource_config = resource_config
 
     @property

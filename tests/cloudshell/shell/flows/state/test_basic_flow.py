@@ -6,7 +6,6 @@ from cloudshell.shell.flows.state.basic_flow import StateFlow
 
 class TestStateFlow(unittest.TestCase):
     def setUp(self):
-        self.logger = mock.MagicMock()
         self.api = mock.MagicMock()
         self.resource_config = mock.MagicMock()
         self.session = mock.MagicMock(
@@ -22,7 +21,6 @@ class TestStateFlow(unittest.TestCase):
             )
         )
         self.state_flow = StateFlow(
-            logger=self.logger,
             api=self.api,
             resource_config=self.resource_config,
             cli_configurator=self.cli_configurator,
@@ -48,9 +46,7 @@ class TestStateFlow(unittest.TestCase):
             f"Health check on resource {self.resource_config.name} passed.",
         )
 
-        run_command_flow_class.assert_called_once_with(
-            self.logger, self.cli_configurator
-        )
+        run_command_flow_class.assert_called_once_with(self.cli_configurator)
         run_command_flow.run_custom_command.assert_called_once_with("")
         self.api.SetResourceLiveStatus.assert_called_once_with(
             self.resource_config.name, "Online", result

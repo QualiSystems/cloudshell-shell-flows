@@ -41,7 +41,7 @@ def local_time_str(monkeypatch):
 
 
 @pytest.fixture()
-def flow_do_nothing(logger):
+def flow_do_nothing():
     class TestedFlow(AbstractConfigurationFlow):
         file_system = "file:/"
 
@@ -63,10 +63,10 @@ def flow_do_nothing(logger):
             pass
 
     conf = ResourceConfig("res-name")
-    return TestedFlow(logger, conf)
+    return TestedFlow(conf)
 
 
-def test_file_system_property_not_implemented(logger):
+def test_file_system_property_not_implemented():
     class TestedFlow(AbstractConfigurationFlow):
         def _save_flow(
             self,
@@ -94,7 +94,7 @@ def test_file_system_property_not_implemented(logger):
             return super().file_system
 
     conf = ResourceConfig("res-name")
-    flow = TestedFlow(logger, conf)
+    flow = TestedFlow(conf)
 
     with pytest.raises(NotImplementedError):
         _ = flow.file_system
@@ -185,7 +185,6 @@ def test_save_method_get_correct_file_path(
     resource_config,
     file_system,
     expected_file_prefix,
-    logger,
     local_time_str,
 ):
     config_type = "running"
@@ -202,13 +201,13 @@ def test_save_method_get_correct_file_path(
             assert str(file_dst_url) == expected_file_path
             assert configuration_type == ConfigurationType.from_str(config_type)
 
-    flow = TestedConfigurationFlow(logger, resource_config)
+    flow = TestedConfigurationFlow(resource_config)
 
     file_name = flow.save(folder_path, config_type)
     assert expected_file_path.endswith(file_name)
 
 
-def test_save_return_another_filename(logger):
+def test_save_return_another_filename():
     class TestedConfigurationFlow(AbstractConfigurationFlow):
         _restore_flow = None
         file_system = None
@@ -222,7 +221,7 @@ def test_save_return_another_filename(logger):
             return "another-file-name"
 
     resource_config = ResourceConfig("res-name")
-    flow = TestedConfigurationFlow(logger, resource_config)
+    flow = TestedConfigurationFlow(resource_config)
     file_name = flow.save("ftp://folder-path", "running")
 
     assert file_name == "another-file-name"
@@ -233,7 +232,7 @@ def test_save_incorrect_folder_path(flow_do_nothing):
         flow_do_nothing.save("flash", "startup")
 
 
-def test_orchestration_save(logger, local_time_str):
+def test_orchestration_save(local_time_str):
     class TestedFlow(AbstractConfigurationFlow):
         file_system = "flash:/"
         _restore_flow = None
@@ -247,7 +246,7 @@ def test_orchestration_save(logger, local_time_str):
             return None
 
     conf = ResourceConfig("res-name")
-    flow = TestedFlow(logger, conf)
+    flow = TestedFlow(conf)
     custom_params = json.dumps({"custom_params": {"configuration_type": "startup"}})
     file_path = flow.orchestration_save(custom_params=custom_params)
     file_suffix = f"-startup-{local_time_str}"
@@ -276,7 +275,7 @@ def test_orchestration_save(logger, local_time_str):
         ),
     ),
 )
-def test_restore(logger, passed_config_path, resource_config, expected_config_path):
+def test_restore(passed_config_path, resource_config, expected_config_path):
     class TestedFlow(AbstractConfigurationFlow):
         file_system = "disk0:"
         _save_flow = None
@@ -293,18 +292,18 @@ def test_restore(logger, passed_config_path, resource_config, expected_config_pa
             assert restore_method == RestoreMethod.OVERRIDE
             assert vrf_management_name == "mgmt-vrf"
 
-    flow = TestedFlow(logger, resource_config)
+    flow = TestedFlow(resource_config)
     flow.restore(passed_config_path, "startup", "override", "mgmt-vrf")
 
 
-def test_restore_invalid_path(logger):
+def test_restore_invalid_path():
     class TestedFlow(AbstractConfigurationFlow):
         file_system = None
         _save_flow = None
         _restore_flow = None
 
     conf = ResourceConfig("")
-    flow = TestedFlow(logger, conf)
+    flow = TestedFlow(conf)
 
     with pytest.raises(ErrorParsingUrl):
         flow.restore("file", "running", "append")
@@ -315,7 +314,7 @@ def test_restore_without_filename(flow_do_nothing):
         flow_do_nothing.restore("ftp://host", "running", "append")
 
 
-def test_another_local_url(logger, local_time_str):
+def test_another_local_url(local_time_str):
     file_suffix = f"-running-{local_time_str}"
     conf = ResourceConfig("res-name")
 
@@ -341,7 +340,7 @@ def test_another_local_url(logger, local_time_str):
         ) -> None:
             assert config_path == LocalFileURL(path="/folder/res-name")
 
-    flow = TestedFlow(logger, conf)
+    flow = TestedFlow(conf)
     flow.save("file://folder", "running", "mgmt")
     flow.restore("file://folder/res-name", "running", "append", "mgmt")
 
