@@ -1,6 +1,4 @@
 -r test_requirements.txt
-cloudshell-shell-core~=6.0
-cloudshell-logging~=2.0
-cloudshell-shell-standards @ git+https://github.com/QualiSystems/cloudshell-shell-standards@feature/new-cs-shell-core
+-r requirements.txt
 typing_extensions
 attrs>=21
